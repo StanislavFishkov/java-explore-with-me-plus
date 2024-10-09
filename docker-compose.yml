@@ -20,6 +20,11 @@ services:
       - POSTGRES_DB=StatServDB
       - POSTGRES_USER=dbuser
       - POSTGRES_PASSWORD=12345
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
 
   ewm-service:
     build: main-service/
@@ -30,7 +35,7 @@ services:
       - ewm-db
       - stats-server
     environment:
-      - POSTGRES_DB=MainServDB
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/MainServDB
       - POSTGRES_USER=dbuser
       - POSTGRES_PASSWORD=12345
 
@@ -43,3 +48,9 @@ services:
       - POSTGRES_DB=MainServDB
       - POSTGRES_USER=dbuser
       - POSTGRES_PASSWORD=12345
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
