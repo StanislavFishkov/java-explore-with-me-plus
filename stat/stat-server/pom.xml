@@ -53,6 +53,12 @@
             <artifactId>mapstruct</artifactId>
             <version>LATEST</version>
         </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>LATEST</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
