@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface StatsRepository extends JpaRepository<Stats, Integer> {
+public interface StatsRepository extends JpaRepository<Stats, Long> {
 
     @Query("SELECT s.app AS app, s.uri AS uri, COUNT(s) AS hits " +
             "FROM Stats s " +

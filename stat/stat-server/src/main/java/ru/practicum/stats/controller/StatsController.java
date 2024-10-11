@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.EndpointHitDTO;
-import ru.practicum.ViewStatsDTO;
+import ru.practicum.stats.dto.EndpointHitDTO;
+import ru.practicum.stats.dto.ViewStatsDTO;
 import ru.practicum.stats.service.StatsService;
 
 import java.time.LocalDateTime;
