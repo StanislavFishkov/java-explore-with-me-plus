@@ -16,16 +16,16 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
     @Query("SELECT s.app AS app, s.uri AS uri, COUNT(s) AS hits " +
             "FROM Stats s " +
             "WHERE s.timestamp BETWEEN :start AND :end " +
-            "GROUP BY s.app, s.uri " +
-            "ORDER BY COUNT(s) DESC")
+            "GROUP BY app, uri " +
+            "ORDER BY hits DESC")
     List<ViewStatsProjection> getStatsWithHits(@Param("start") LocalDateTime start,
                                                @Param("end") LocalDateTime end);
 
     @Query("SELECT s.app AS app, s.uri AS uri, COUNT(s) AS hits " +
             "FROM Stats s " +
             "WHERE s.timestamp BETWEEN :start AND :end AND s.uri IN :uris " +
-            "GROUP BY s.app, s.uri " +
-            "ORDER BY COUNT(s) DESC")
+            "GROUP BY app, uri " +
+            "ORDER BY hits DESC")
     List<ViewStatsProjection> getStatsWithHitsAndUris(@Param("start") LocalDateTime start,
                                                       @Param("end") LocalDateTime end,
                                                       @Param("uris") List<String> uris);
@@ -33,16 +33,16 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
     @Query("SELECT s.app AS app, s.uri AS uri, COUNT(DISTINCT s.ip) AS hits " +
             "FROM Stats s " +
             "WHERE s.timestamp BETWEEN :start AND :end " +
-            "GROUP BY s.app, s.uri " +
-            "ORDER BY COUNT(DISTINCT s.ip) DESC")
+            "GROUP BY app, uri " +
+            "ORDER BY hits DESC")
     List<ViewStatsProjection> getUniqueStatsWithHits(@Param("start") LocalDateTime start,
                                                      @Param("end") LocalDateTime end);
 
     @Query("SELECT s.app AS app, s.uri AS uri, COUNT(DISTINCT s.ip) AS hits " +
             "FROM Stats s " +
             "WHERE s.timestamp BETWEEN :start AND :end AND s.uri IN :uris " +
-            "GROUP BY s.app, s.uri " +
-            "ORDER BY COUNT(DISTINCT s.ip) DESC")
+            "GROUP BY app, uri " +
+            "ORDER BY hits DESC")
     List<ViewStatsProjection> getUniqueStatsWithHitsAndUris(@Param("start") LocalDateTime start,
                                                             @Param("end") LocalDateTime end,
                                                             @Param("uris") List<String> uris);
