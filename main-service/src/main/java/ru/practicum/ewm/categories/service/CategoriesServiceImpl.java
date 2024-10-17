@@ -2,38 +2,42 @@ package ru.practicum.ewm.categories.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.categories.dto.CategoryDto;
+import ru.practicum.ewm.categories.mapper.CategoryMapper;
 import ru.practicum.ewm.categories.model.Category;
-import ru.practicum.ewm.categories.model.CategoryDto;
-import ru.practicum.ewm.categories.model.CategoryMapper;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
-import ru.practicum.ewm.error.NotFoundException;
-
-import java.io.NotActiveException;
+import ru.practicum.ewm.core.error.exception.NotFoundException;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CategoriesServiceImpl {
+public class CategoriesServiceImpl implements CategoriesService {
     public final CategoriesRepository categoriesRepository;
     private final CategoryMapper categoryMapper;
 
+    @Override
     public Category addCategory(CategoryDto categoryDto) {
         Category category = categoryMapper.toEntity(categoryDto);
         return categoriesRepository.save(category);
     }
-    public Category updateCategory(long id,CategoryDto categoryDto) {
+
+    @Override
+    public Category updateCategory(long id, CategoryDto categoryDto) {
+        log.info("start updateCategory");
         Category category = categoryMapper.toEntity(categoryDto);
         category.setId(id);
-        if (categoriesRepository.existsById(id)) {
-            throw new NotFoundException(HttpStatus.NOT_FOUND, "Category not found", "category not found", );
+        if (!categoriesRepository.existsById(id)) {
+            throw new NotFoundException("Category with id " + id + " not found");
         }
         return categoriesRepository.save(category);
     }
 
+    @Override
     public void deleteCategory(Long id) {
+        if (!categoriesRepository.existsById(id)) {
+            throw new NotFoundException("Category with id " + id + " not found");
+        }
         categoriesRepository.deleteById(id);
     }
-
 }
