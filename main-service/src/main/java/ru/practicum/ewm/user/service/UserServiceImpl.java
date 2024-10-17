@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.core.error.exception.InternalServerException;
 import ru.practicum.ewm.core.error.exception.NotFoundException;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserRequestDto;
@@ -37,7 +36,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserShortDto> getUsers(List<Long> ids) {
         log.info("getUsers params: ids = {}", ids);
-        return userRepository.findAllByIdIn(ids)
+        return userRepository.findAllById(ids)
                 .stream()
                 .map(userMapper::toShortDto)
                 .toList();
@@ -65,10 +64,6 @@ public class UserServiceImpl implements UserService {
     public UserDto registerUser(UserRequestDto userRequestDto) {
         log.info("registerUser params: userRequestDto = {}", userRequestDto);
         User user = userRepository.save(userMapper.toEntity(userRequestDto));
-        if (user.getId() == null) {
-            throw new InternalServerException(
-                    "Ошибка создания пользователя");
-        }
         log.info("registerUser result user = {}", user);
         return userMapper.toDto(user);
     }
