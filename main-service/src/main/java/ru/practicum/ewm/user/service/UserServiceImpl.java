@@ -2,6 +2,7 @@ package ru.practicum.ewm.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.core.error.exception.InternalServerException;
@@ -24,35 +25,58 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     @Override
-    public UserShortDto getById(long userId) {
+    public UserShortDto getById(Long userId) {
+        log.info("getById params: id = {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(
                 String.format("Пользователь с ид %s не найден", userId))
         );
+        log.info("getById result user = {}", user);
         return userMapper.toShortDto(user);
     }
 
     @Override
-    public List<UserShortDto> getUsers(List<String> ids) {
-        return null;
+    public List<UserShortDto> getUsers(List<Long> ids) {
+        log.info("getUsers params: ids = {}", ids);
+        return userRepository.findAllByIdIn(ids)
+                .stream()
+                .map(userMapper::toShortDto)
+                .toList();
     }
 
     @Override
-    public List<UserDto> getUsers(List<String> ids, int from, int size) {
-        return userRepository.findAll().stream().map(userMapper::toDto).toList();
+    public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
+        log.info("getUsers params: ids = {}, from = {}, size = {}", ids, from, size);
+        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
+
+        if (ids == null || ids.isEmpty()) {
+            log.info("getUsers call: findAll");
+            return userRepository.findAll(page)
+                    .map(userMapper::toDto)
+                    .getContent();
+        }
+        log.info("getUsers call: findAllByIdIn");
+        return userRepository.findAllByIdIn(ids, page)
+                .map(userMapper::toDto)
+                .getContent();
     }
 
     @Override
+    @Transactional
     public UserDto registerUser(UserRequestDto userRequestDto) {
+        log.info("registerUser params: userRequestDto = {}", userRequestDto);
         User user = userRepository.save(userMapper.toEntity(userRequestDto));
         if (user.getId() == null) {
             throw new InternalServerException(
                     "Ошибка создания пользователя");
         }
+        log.info("registerUser result user = {}", user);
         return userMapper.toDto(user);
     }
 
     @Override
-    public void delete(long userId) {
+    @Transactional
+    public void delete(Long userId) {
+        log.info("delete params: userId = {}", userId);
         userRepository.deleteById(userId);
     }
 }
