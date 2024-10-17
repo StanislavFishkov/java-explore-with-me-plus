@@ -8,13 +8,13 @@ import java.util.List;
 
 public interface UserService {
 
-    UserShortDto getById(long userId);
+    UserShortDto getById(Long userId);
 
-    List<UserShortDto> getUsers(List<String> ids);
+    List<UserShortDto> getUsers(List<Long> ids);
 
-    List<UserDto> getUsers(List<String> ids, int from, int size);
+    List<UserDto> getUsers(List<Long> ids, Integer from, Integer size);
 
     UserDto registerUser(UserRequestDto userRequestDto);
 
-    void delete(long userId);
+    void delete(Long userId);
 }

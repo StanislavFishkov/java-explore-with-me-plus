@@ -24,9 +24,9 @@ public class AdminUserController {
     private final UserService userService;
 
     @GetMapping
-    public List<UserDto> getUsers(@RequestParam(required = false) List<String> ids,
-                                  @PositiveOrZero @RequestParam(defaultValue = "0") int from,
-                                  @Positive @RequestParam(defaultValue = "10") int size) {
+    public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
+                                  @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                  @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("GET /admin/users with params(ids = {}, from = {}, size = {})", ids, from, size);
         return userService.getUsers(ids, from, size);
     }
@@ -40,7 +40,7 @@ public class AdminUserController {
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable(name = "userId") long userId) {
+    public void delete(@PathVariable(name = "userId") Long userId) {
         log.info("DELETE /admin/users/{userID} userID = {})", userId);
         userService.delete(userId);
     }
