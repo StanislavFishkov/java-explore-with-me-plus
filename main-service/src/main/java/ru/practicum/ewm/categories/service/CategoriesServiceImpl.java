@@ -13,7 +13,7 @@ import ru.practicum.ewm.core.error.exception.NotFoundException;
 @Slf4j
 @RequiredArgsConstructor
 public class CategoriesServiceImpl implements CategoriesService {
-    public final CategoriesRepository categoriesRepository;
+    private final CategoriesRepository categoriesRepository;
     private final CategoryMapper categoryMapper;
 
     @Override
@@ -35,9 +35,6 @@ public class CategoriesServiceImpl implements CategoriesService {
 
     @Override
     public void deleteCategory(Long id) {
-        if (!categoriesRepository.existsById(id)) {
-            throw new NotFoundException("Category with id " + id + " not found");
-        }
         categoriesRepository.deleteById(id);
     }
 }
