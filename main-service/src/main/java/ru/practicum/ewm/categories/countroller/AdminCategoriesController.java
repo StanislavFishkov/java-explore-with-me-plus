@@ -27,7 +27,7 @@ public class AdminCategoriesController {
         return categoriesService.updateCategory(id, categoryDto);
     }
 
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     public void deleteCategory(@PathVariable("id") Long id) {
         categoriesService.deleteCategory(id);
