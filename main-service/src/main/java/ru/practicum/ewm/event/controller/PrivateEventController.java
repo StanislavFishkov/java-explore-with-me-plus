@@ -23,7 +23,8 @@ public class PrivateEventController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(path = "/users/{userId}/events")
-    public Object createEvent(@PathVariable("userId") Long userId, @Valid @RequestBody EventRequestDto eventRequestDto) {
+    public Object createEvent(@PathVariable("userId") Long userId,
+                              @Valid @RequestBody EventRequestDto eventRequestDto) {
         return eventService.addEvent(userId, eventRequestDto);
     }
 

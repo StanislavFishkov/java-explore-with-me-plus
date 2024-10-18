@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.ewm.core.error.exception.InternalServerException;
 import ru.practicum.ewm.core.error.exception.NotFoundException;
+import ru.practicum.ewm.core.error.exception.ValidationException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -24,6 +25,17 @@ public class ErrorHandler {
         return new ApiError(
                 HttpStatus.NOT_FOUND,
                 "The required object was not found.",
+                e.getMessage(),
+                getStackTrace(e));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleValidationException(final ValidationException e) {
+        log.error("{} {}", HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        return new ApiError(
+                HttpStatus.BAD_REQUEST,
+                "Bad request.",
                 e.getMessage(),
                 getStackTrace(e));
     }

@@ -2,9 +2,11 @@ package ru.practicum.ewm.event.service;
 
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
+import ru.practicum.ewm.core.error.exception.ValidationException;
 import ru.practicum.ewm.event.dto.EventRequestDto;
 import ru.practicum.ewm.event.dto.EventResponseDto;
 import ru.practicum.ewm.event.dto.EventUpdateDto;
@@ -17,9 +19,11 @@ import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class EventServiceImpl implements EventService {
@@ -32,10 +36,11 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventResponseDto addEvent(Long id, EventRequestDto eventRequestDto) {
+        checkEventTime(eventRequestDto.getEventDate());
         Category category = categoriesRepository.findById(eventRequestDto.getCategory()).get();
         User user = userRepository.findById(id).get();
+
         locationRepository.save(eventRequestDto.getLocation());
-        System.out.println(eventMapper.toEvent(eventRequestDto, category, user));
         return eventMapper.toEventResponseDto(eventRepository.save(eventMapper.toEvent(eventRequestDto, category, user)));
     }
 
@@ -56,7 +61,10 @@ public class EventServiceImpl implements EventService {
     public EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto) {
         Event event = eventRepository.findById(eventId).get();
         eventMapper.update(eventUpdateDto, event);
-        setStateToEvent(eventUpdateDto, event);
+        if (eventUpdateDto.getStateAction() != null) {
+            setStateToEvent(eventUpdateDto, event);
+        }
+
         event.setId(eventId);
         return eventMapper.toEventResponseDto(eventRepository.save(event));
     }
@@ -66,5 +74,16 @@ public class EventServiceImpl implements EventService {
                 .equals(StateAction.CANCEL_REVIEW.toString().toLowerCase())) {
             event.setState(EventStates.CANCELED);
         }
+    }
+
+    private void checkEventTime(LocalDateTime eventDate) {
+        log.info("Проверяем дату события на корректность: {}", eventDate);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime correctEventTime = eventDate.plusHours(2);
+        if (correctEventTime.isBefore(now)) {
+            log.info("дата не корректна");
+            throw new ValidationException("Дата события должна быть +2 часа вперед");
+        }
+
     }
 }

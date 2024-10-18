@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "events")
 public class Event {
+    private final LocalDateTime createdOn = LocalDateTime.now();
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,15 +26,14 @@ public class Event {
     private LocalDateTime eventDate;
     @ManyToOne
     private Location location;
-    private Boolean paid;
-    private int participantLimit;
-    private Boolean requestModeration;
+    private Boolean paid = false;
+    private int participantLimit = 0;
+    private Boolean requestModeration = true;
     private String title;
     @ManyToOne
     private User initiator;
     private EventStates state = EventStates.PENDING;
     private int views;
-    private final LocalDateTime createdOn = LocalDateTime.now();
     private LocalDateTime publishedOn;
 }
 
