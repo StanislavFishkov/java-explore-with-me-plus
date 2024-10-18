@@ -4,9 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.practicum.ewm.core.error.exception.ConflictDataException;
 import ru.practicum.ewm.core.error.exception.InternalServerException;
 import ru.practicum.ewm.core.error.exception.NotFoundException;
 import ru.practicum.ewm.core.error.exception.ValidationException;
@@ -29,24 +31,25 @@ public class ErrorHandler {
                 getStackTrace(e));
     }
 
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleValidationException(final ValidationException e) {
-        log.error("{} {}", HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        return new ApiError(
-                HttpStatus.BAD_REQUEST,
-                "Bad request.",
-                e.getMessage(),
-                getStackTrace(e));
-    }
-
-    @ExceptionHandler
+    @ExceptionHandler({ConflictDataException.class, DataIntegrityViolationException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
+    public ApiError handleDataIntegrityViolationException(final Exception e) {
         log.error("{} {}", HttpStatus.CONFLICT, e.getMessage(), e);
         return new ApiError(
                 HttpStatus.CONFLICT,
                 "Integrity constraint has been violated.",
+                e.getMessage(),
+                getStackTrace(e));
+    }
+
+    @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentNotValidException.class,
+            ValidationException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMethodArgumentNotValidException(final Exception e) {
+        log.error("{} {}", HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        return new ApiError(
+                HttpStatus.BAD_REQUEST,
+                "Incorrectly made request.",
                 e.getMessage(),
                 getStackTrace(e));
     }
@@ -58,17 +61,6 @@ public class ErrorHandler {
         return new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal server error.",
-                e.getMessage(),
-                getStackTrace(e));
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
-        log.error("{} {}", HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        return new ApiError(
-                HttpStatus.BAD_REQUEST,
-                "Incorrectly made request.",
                 e.getMessage(),
                 getStackTrace(e));
     }
