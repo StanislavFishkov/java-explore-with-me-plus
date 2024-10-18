@@ -7,13 +7,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.ewm.core.util.DateTimeUtil;
 import ru.practicum.ewm.event.model.Location;
+import ru.practicum.ewm.event.model.StateAction;
 
 import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventRequestDto {
+
+
+public class EventUpdateDto {
     @Size(min = 20, max = 2000)
     private String annotation;
     private Long category;
@@ -27,4 +30,5 @@ public class EventRequestDto {
     private Boolean requestModeration;
     @Size(min = 3, max = 120)
     private String title;
+    private StateAction stateAction;
 }

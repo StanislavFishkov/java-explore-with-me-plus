@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.service;
 
 import ru.practicum.ewm.event.dto.EventRequestDto;
 import ru.practicum.ewm.event.dto.EventResponseDto;
+import ru.practicum.ewm.event.dto.EventUpdateDto;
 
 import java.util.List;
 
@@ -12,5 +13,5 @@ public interface EventService {
 
     EventResponseDto getEventById(Long id);
 
-    EventResponseDto updateEvent(Long userId, Long eventId, EventRequestDto eventRequestDto);
+    EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto);
 }

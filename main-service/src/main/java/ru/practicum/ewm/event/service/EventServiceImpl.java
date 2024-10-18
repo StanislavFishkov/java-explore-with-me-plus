@@ -7,7 +7,11 @@ import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
 import ru.practicum.ewm.event.dto.EventRequestDto;
 import ru.practicum.ewm.event.dto.EventResponseDto;
+import ru.practicum.ewm.event.dto.EventUpdateDto;
 import ru.practicum.ewm.event.mapper.EventMapper;
+import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.model.EventStates;
+import ru.practicum.ewm.event.model.StateAction;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.user.model.User;
@@ -49,13 +53,18 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventResponseDto updateEvent(Long userId, Long eventId, EventRequestDto eventRequestDto) {
-/*        User user = userRepository.findById(userId).get();
-        Category category = categoriesRepository.findById(eventRequestDto.getCategory()).get();
-        Event event = eventMapper.toEvent(eventRequestDto, category, user);
+    public EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto) {
+        Event event = eventRepository.findById(eventId).get();
+        eventMapper.update(eventUpdateDto, event);
+        setStateToEvent(eventUpdateDto, event);
         event.setId(eventId);
         return eventMapper.toEventResponseDto(eventRepository.save(event));
-        */
-        return null;
+    }
+
+    private void setStateToEvent(EventUpdateDto eventUpdateDto, Event event) {
+        if (eventUpdateDto.getStateAction().toString().toLowerCase()
+                .equals(StateAction.CANCEL_REVIEW.toString().toLowerCase())) {
+            event.setState(EventStates.CANCELED);
+        }
     }
 }
