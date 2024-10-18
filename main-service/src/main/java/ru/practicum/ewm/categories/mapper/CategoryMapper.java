@@ -9,7 +9,4 @@ import ru.practicum.ewm.categories.model.Category;
 public interface CategoryMapper {
     @Mapping(target = "id", ignore = true)
     Category toEntity(CategoryDto categoryDto);
-
-    CategoryDto toDto(Category category);
-
 }
