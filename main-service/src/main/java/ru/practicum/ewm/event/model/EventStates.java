@@ -4,5 +4,6 @@ public enum EventStates {
     PENDING,
     CANCELED,
     REJECTED,
-    CONFIRMED;
+    CONFIRMED,
+    PUBLISHED;
 }

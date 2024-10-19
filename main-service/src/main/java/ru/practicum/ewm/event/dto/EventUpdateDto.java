@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class EventUpdateDto {
     @NotBlank
     @Size(min = 20, max = 2000)
