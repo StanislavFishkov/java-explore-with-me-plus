@@ -53,13 +53,13 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventResponseDto getEventById(Long id) {
-        return eventMapper.toEventResponseDto(eventRepository.findById(id).get());
+    public EventResponseDto getEventById(Long userId, Long eventId) {
+        return eventMapper.toEventResponseDto(eventRepository.findByIdAndInitiator_Id(eventId, userId));
     }
 
     @Override
     public EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto) {
-        Event event = eventRepository.findById(eventId).get();
+        Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId);
         eventMapper.update(eventUpdateDto, event);
         if (eventUpdateDto.getStateAction() != null) {
             setStateToEvent(eventUpdateDto, event);
