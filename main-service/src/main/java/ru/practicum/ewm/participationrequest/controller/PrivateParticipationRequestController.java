@@ -1,6 +1,7 @@
 package ru.practicum.ewm.participationrequest.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.participationrequest.dto.ParticipationRequestDto;
 import ru.practicum.ewm.participationrequest.service.ParticipationRequestService;
@@ -13,6 +14,7 @@ import java.util.List;
 public class PrivateParticipationRequestController {
     private final ParticipationRequestService participationRequestService;
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/{userId}/requests")
     public ParticipationRequestDto create(@PathVariable Long userId, @RequestParam Long eventId) {
         return participationRequestService.create(userId, eventId);
@@ -23,7 +25,7 @@ public class PrivateParticipationRequestController {
         return participationRequestService.get(userId);
     }
 
-    @GetMapping("/{userId}/requests/{requestId}/cancel")
+    @PatchMapping("/{userId}/requests/{requestId}/cancel")
     public ParticipationRequestDto cancel(@PathVariable Long userId, @PathVariable Long requestId) {
         return participationRequestService.cancel(userId, requestId);
     }

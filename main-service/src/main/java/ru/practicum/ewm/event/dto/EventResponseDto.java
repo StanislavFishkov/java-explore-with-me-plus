@@ -1,9 +1,6 @@
 package ru.practicum.ewm.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,13 +10,10 @@ import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class EventResponseDto {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String annotation;
     private Category category;
@@ -28,7 +22,7 @@ public class EventResponseDto {
     private LocalDateTime eventDate;
     private LocationDto location;
     private Boolean paid;
-    private int participantLimit;
+    private Integer participantLimit;
     private Boolean requestModeration;
     private String title;
     private UserShortDto initiator;

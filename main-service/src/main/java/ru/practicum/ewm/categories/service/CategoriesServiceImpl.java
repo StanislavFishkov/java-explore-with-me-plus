@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.categories.dto.CategoryDto;
+import ru.practicum.ewm.categories.dto.NewCategoryDto;
 import ru.practicum.ewm.categories.mapper.CategoryMapper;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
@@ -20,26 +21,27 @@ public class CategoriesServiceImpl implements CategoriesService {
 
     @Transactional
     @Override
-    public Category addCategory(CategoryDto categoryDto) {
-        Category category = categoryMapper.toEntity(categoryDto);
-        return categoriesRepository.save(category);
+    public CategoryDto addCategory(NewCategoryDto newCategoryDto) {
+        Category category = categoriesRepository.save(categoryMapper.toEntity(newCategoryDto));
+        log.info("Category is created: {}", category);
+        return categoryMapper.toDto(category);
     }
 
     @Transactional
     @Override
-    public Category updateCategory(long id, CategoryDto categoryDto) {
+    public CategoryDto updateCategory(long id, NewCategoryDto updateCategoryDto) {
         log.info("start updateCategory");
-        Category category = categoryMapper.toEntity(categoryDto);
-        category.setId(id);
-        if (!categoriesRepository.existsById(id)) {
-            throw new NotFoundException("Category with id " + id + " not found");
-        }
-        return categoriesRepository.save(category);
+        Category category = categoriesRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Category with id " + id + " not found"));
+        category = categoriesRepository.save(categoryMapper.update(category, updateCategoryDto));
+        log.info("Category is updated: {}", category);
+        return categoryMapper.toDto(categoriesRepository.save(category));
     }
 
     @Transactional
     @Override
     public void deleteCategory(Long id) {
         categoriesRepository.deleteById(id);
+        log.info("Category deleted with id: {}", id);
     }
 }

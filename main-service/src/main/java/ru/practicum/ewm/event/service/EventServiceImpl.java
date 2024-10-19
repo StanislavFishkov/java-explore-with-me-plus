@@ -6,14 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
+import ru.practicum.ewm.core.error.exception.ConflictDataException;
+import ru.practicum.ewm.core.error.exception.NotFoundException;
 import ru.practicum.ewm.core.error.exception.ValidationException;
-import ru.practicum.ewm.event.dto.EventRequestDto;
-import ru.practicum.ewm.event.dto.EventResponseDto;
-import ru.practicum.ewm.event.dto.EventUpdateDto;
+import ru.practicum.ewm.core.util.DateTimeUtil;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
-import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.event.model.EventStates;
-import ru.practicum.ewm.event.model.StateAction;
+import ru.practicum.ewm.event.mapper.LocationMapper;
+import ru.practicum.ewm.event.model.*;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.user.model.User;
@@ -32,6 +32,7 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
     private final EventMapper eventMapper;
+    private final LocationMapper locationMapper;
 
 
     @Override
@@ -39,9 +40,10 @@ public class EventServiceImpl implements EventService {
         checkEventTime(eventRequestDto.getEventDate());
         Category category = categoriesRepository.findById(eventRequestDto.getCategory()).get();
         User user = userRepository.findById(id).get();
+        Location location = getOrCreateLocation(eventRequestDto.getLocation());
 
-        locationRepository.save(eventRequestDto.getLocation());
-        return eventMapper.toEventResponseDto(eventRepository.save(eventMapper.toEvent(eventRequestDto, category, user)));
+        Event event = eventRepository.save(eventMapper.toEvent(eventRequestDto, category, user, location));
+        return eventMapper.toEventResponseDto(event);
     }
 
     @Override
@@ -60,7 +62,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto) {
         Event event = eventRepository.findById(eventId).get();
-        eventMapper.update(eventUpdateDto, event);
+        eventMapper.update(event, eventUpdateDto, getOrCreateLocation(eventUpdateDto.getLocation()));
         if (eventUpdateDto.getStateAction() != null) {
             setStateToEvent(eventUpdateDto, event);
         }
@@ -69,9 +71,64 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toEventResponseDto(eventRepository.save(event));
     }
 
+    @Override
+    public EventFullDto update(Long eventId, UpdateEventAdminRequestDto updateEventAdminRequestDto) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("On Event admin update - Event doesn't exist with id: " + eventId));
+
+        Category category = null;
+        if (updateEventAdminRequestDto.getCategory() != null)
+            category = categoriesRepository.findById(updateEventAdminRequestDto.getCategory())
+                    .orElseThrow(() -> new NotFoundException("On Event admin update - Category doesn't exist with id: " +
+                            updateEventAdminRequestDto.getCategory()));
+
+        event = eventMapper.update(event, updateEventAdminRequestDto, category,
+                getOrCreateLocation(updateEventAdminRequestDto.getLocation()));
+        calculateNewEventState(event, updateEventAdminRequestDto.getStateAction());
+
+        event = eventRepository.save(event);
+        log.info("Event is updated by admin: {}", event);
+        return eventMapper.toFullDto(event);
+    }
+
+    private Location getOrCreateLocation(LocationDto locationDto) {
+        return locationDto == null ? null : locationRepository.findByLatAndLon(locationDto.getLat(), locationDto.getLon())
+                .orElseGet(() -> locationRepository.save(locationMapper.toLocation(locationDto)));
+    }
+
+    private void calculateNewEventState(Event event, EventStateActionAdmin stateAction) {
+        if (stateAction == EventStateActionAdmin.PUBLISH_EVENT) {
+            if (event.getState() != EventStates.PENDING) {
+                throw new ConflictDataException(
+                        String.format("On Event admin update - " +
+                                "Event with id %s can't be published from the state %s: ",
+                                event.getId(), event.getState()));
+            }
+
+            LocalDateTime currentDateTime = DateTimeUtil.currentDateTime();
+            if (currentDateTime.plusHours(1).isAfter(event.getEventDate()))
+                throw new ConflictDataException(
+                        String.format("On Event admin update - " +
+                                        "Event with id %s can't be published because the event date is to close %s: ",
+                                event.getId(), event.getEventDate()));
+
+            event.setPublishedOn(currentDateTime);
+            event.setState(EventStates.PUBLISHED);
+        } else if (stateAction == EventStateActionAdmin.REJECT_EVENT) {
+            if (event.getState() == EventStates.PUBLISHED) {
+                throw new ConflictDataException(
+                        String.format("On Event admin update - " +
+                                        "Event with id %s can't be canceled because it is already published: ",
+                                event.getState()));
+            }
+
+            event.setState(EventStates.CANCELED);
+        }
+    }
+
     private void setStateToEvent(EventUpdateDto eventUpdateDto, Event event) {
         if (eventUpdateDto.getStateAction().toString().toLowerCase()
-                .equals(StateAction.CANCEL_REVIEW.toString().toLowerCase())) {
+                .equals(EventStateActionPrivate.CANCEL_REVIEW.toString().toLowerCase())) {
             event.setState(EventStates.CANCELED);
         }
     }

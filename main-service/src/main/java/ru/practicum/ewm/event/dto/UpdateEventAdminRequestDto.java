@@ -4,18 +4,20 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.ewm.core.util.DateTimeUtil;
 import ru.practicum.ewm.core.validation.NullOrNotBlank;
-import ru.practicum.ewm.event.model.EventStateActionPrivate;
+import ru.practicum.ewm.event.model.EventStateActionAdmin;
 
 import java.time.LocalDateTime;
 
 @Data
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventUpdateDto {
+public class UpdateEventAdminRequestDto {
     @NullOrNotBlank
     @Size(min = 20, max = 2000)
     private String annotation;
@@ -33,5 +35,5 @@ public class EventUpdateDto {
     @NullOrNotBlank
     @Size(min = 3, max = 120)
     private String title;
-    private EventStateActionPrivate stateAction;
+    private EventStateActionAdmin stateAction;
 }
