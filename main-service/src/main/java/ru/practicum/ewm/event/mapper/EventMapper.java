@@ -12,9 +12,8 @@ import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {LocationMapper.class, UserMapper.class})
 public interface EventMapper {
-    EventResponseDto toEventResponseDto(Event event);
-
-    EventResponseShort toEventResponseShort(Event event);
+    @Mapping(target = "confirmedRequests", ignore = true)
+    EventShortDto toShortDto(Event event);
 
     EventFullDto toFullDto(Event event);
 
@@ -30,7 +29,7 @@ public interface EventMapper {
     @Mapping(target = "state", ignore = true)
     @Mapping(target = "views", ignore = true)
     @Mapping(target = "publishedOn", ignore = true)
-    Event toEvent(EventRequestDto eventRequestDto, Category category, User userFromRequest, Location location);
+    Event toEvent(NewEventDto newEventDto, Category category, User userFromRequest, Location location);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", ignore = true)
@@ -40,7 +39,7 @@ public interface EventMapper {
     @Mapping(target = "views", ignore = true)
     @Mapping(target = "publishedOn", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    Event update(@MappingTarget Event event, EventUpdateDto eventUpdateDto, Location location);
+    Event update(@MappingTarget Event event, UpdateEventUserRequestDto eventUpdateDto, Location location);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", source = "category")

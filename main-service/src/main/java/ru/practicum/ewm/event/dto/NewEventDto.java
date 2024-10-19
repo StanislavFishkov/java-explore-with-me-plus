@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventRequestDto {
+public class NewEventDto {
     @NotBlank
     @Size(min = 20, max = 2000)
     private String annotation;
@@ -24,6 +24,7 @@ public class EventRequestDto {
     @Size(min = 20, max = 7000)
     private String description;
 
+    @Future
     @JsonFormat(pattern = DateTimeUtil.DATE_TIME_FORMAT)
     private LocalDateTime eventDate;
 

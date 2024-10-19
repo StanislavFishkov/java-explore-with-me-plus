@@ -34,41 +34,47 @@ public class EventServiceImpl implements EventService {
     private final EventMapper eventMapper;
     private final LocationMapper locationMapper;
 
-
-    @Override
-    public EventResponseDto addEvent(Long id, EventRequestDto eventRequestDto) {
-        checkEventTime(eventRequestDto.getEventDate());
-        Category category = categoriesRepository.findById(eventRequestDto.getCategory()).get();
-        User user = userRepository.findById(id).get();
-        Location location = getOrCreateLocation(eventRequestDto.getLocation());
-
-        Event event = eventRepository.save(eventMapper.toEvent(eventRequestDto, category, user, location));
-        return eventMapper.toEventResponseDto(event);
+    private Event checkAndGetEventByIdAndInitiatorId(Long eventId, Long initiatorId) {
+        return eventRepository.findByIdAndInitiator_Id(eventId, initiatorId)
+                .orElseThrow(() -> new NotFoundException(String.format("On event operations - " +
+                        "Event doesn't exist with id %s or not available for User with id %s: ", eventId, initiatorId)));
     }
 
     @Override
-    public List<EventResponseDto> getEventsByUserId(Long id) {
+    public EventFullDto addEvent(Long id, NewEventDto newEventDto) {
+        checkEventTime(newEventDto.getEventDate());
+        Category category = categoriesRepository.findById(newEventDto.getCategory()).get();
+        User user = userRepository.findById(id).get();
+        Location location = getOrCreateLocation(newEventDto.getLocation());
+
+        Event event = eventRepository.save(eventMapper.toEvent(newEventDto, category, user, location));
+        return eventMapper.toFullDto(event);
+    }
+
+    @Override
+    public List<EventShortDto> getEventsByUserId(Long id) {
+        // TODO: не заполняется confirmedRequests
         return eventRepository.findAllByInitiator_Id(id)
                 .stream()
-                .map(eventMapper::toEventResponseDto)
+                .map(eventMapper::toShortDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public EventResponseDto getEventById(Long userId, Long eventId) {
-        return eventMapper.toEventResponseDto(eventRepository.findByIdAndInitiator_Id(eventId, userId));
+    public EventFullDto getEventById(Long userId, Long eventId) {
+        return eventMapper.toFullDto(checkAndGetEventByIdAndInitiatorId(eventId, userId));
     }
 
     @Override
-    public EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto) {
-        Event event = eventRepository.findById(eventId).get();
+    public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequestDto eventUpdateDto) {
+        Event event = checkAndGetEventByIdAndInitiatorId(eventId, userId);
         eventMapper.update(event, eventUpdateDto, getOrCreateLocation(eventUpdateDto.getLocation()));
         if (eventUpdateDto.getStateAction() != null) {
             setStateToEvent(eventUpdateDto, event);
         }
 
         event.setId(eventId);
-        return eventMapper.toEventResponseDto(eventRepository.save(event));
+        return eventMapper.toFullDto(eventRepository.save(event));
     }
 
     @Override
@@ -126,7 +132,7 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void setStateToEvent(EventUpdateDto eventUpdateDto, Event event) {
+    private void setStateToEvent(UpdateEventUserRequestDto eventUpdateDto, Event event) {
         if (eventUpdateDto.getStateAction().toString().toLowerCase()
                 .equals(EventStateActionPrivate.CANCEL_REVIEW.toString().toLowerCase())) {
             event.setState(EventStates.CANCELED);

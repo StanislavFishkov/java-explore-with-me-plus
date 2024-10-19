@@ -5,13 +5,13 @@ import ru.practicum.ewm.event.dto.*;
 import java.util.List;
 
 public interface EventService {
-    EventResponseDto addEvent(Long id, EventRequestDto eventRequestDto);
+    EventFullDto addEvent(Long id, NewEventDto newEventDto);
 
-    List<EventResponseDto> getEventsByUserId(Long id);
+    List<EventShortDto> getEventsByUserId(Long id);
 
-    EventResponseDto getEventById(Long userId, Long eventId);
+    EventFullDto getEventById(Long userId, Long eventId);
 
-    EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto);
+    EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequestDto eventUpdateDto);
 
     EventFullDto update(Long eventId, UpdateEventAdminRequestDto updateEventAdminRequestDto);
 }
