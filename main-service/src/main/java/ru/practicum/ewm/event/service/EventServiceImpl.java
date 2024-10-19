@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
+import ru.practicum.ewm.core.error.exception.NotFoundException;
 import ru.practicum.ewm.core.error.exception.ValidationException;
 import ru.practicum.ewm.event.dto.EventRequestDto;
 import ru.practicum.ewm.event.dto.EventResponseDto;
@@ -21,6 +22,7 @@ import ru.practicum.ewm.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -59,7 +61,10 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventResponseDto updateEvent(Long userId, Long eventId, EventUpdateDto eventUpdateDto) {
-        Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId);
+
+        Event event = Optional.ofNullable(eventRepository.findByIdAndInitiator_Id(eventId, userId)).orElseThrow(() ->
+                new NotFoundException("Event не найден"));
+
         eventMapper.update(eventUpdateDto, event);
         if (eventUpdateDto.getStateAction() != null) {
             setStateToEvent(eventUpdateDto, event);
