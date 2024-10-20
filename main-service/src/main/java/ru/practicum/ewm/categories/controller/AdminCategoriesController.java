@@ -1,4 +1,4 @@
-package ru.practicum.ewm.categories.countroller;
+package ru.practicum.ewm.categories.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.categories.dto.CategoryDto;
-import ru.practicum.ewm.categories.model.Category;
+import ru.practicum.ewm.categories.dto.NewCategoryDto;
 import ru.practicum.ewm.categories.service.CategoriesService;
 
 @Validated
@@ -18,13 +18,13 @@ public class AdminCategoriesController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public Category addCategory(@Valid @RequestBody CategoryDto categoryDto) {
-        return categoriesService.addCategory(categoryDto);
+    public CategoryDto addCategory(@Valid @RequestBody NewCategoryDto newCategoryDto) {
+        return categoriesService.addCategory(newCategoryDto);
     }
 
     @PatchMapping("/{id}")
-    public Category updateCategory(@PathVariable("id") Long id, @Valid @RequestBody CategoryDto categoryDto) {
-        return categoriesService.updateCategory(id, categoryDto);
+    public CategoryDto updateCategory(@PathVariable("id") Long id, @Valid @RequestBody NewCategoryDto newCategoryDto) {
+        return categoriesService.updateCategory(id, newCategoryDto);
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)

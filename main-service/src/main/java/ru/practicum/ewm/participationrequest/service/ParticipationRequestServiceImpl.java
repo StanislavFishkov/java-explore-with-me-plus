@@ -58,18 +58,21 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                     String.format("On part. request create - " +
                             "Request by Requester with id %s and Event with id %s already exists: ", eventId, userId));
 
-        long requestsCount = participationRequestRepository.countByEventAndStatusIn(event,
-                List.of(ParticipationRequestStatus.CONFIRMED));
-        if (requestsCount >= event.getParticipantLimit())
-            throw new ConflictDataException(
-                    String.format("On part. request create - " +
-                            "Event with id %s reached the limit of participants and User with id %s can't apply: ", eventId, userId));
+        if (event.getParticipantLimit() != 0) {
+            long requestsCount = participationRequestRepository.countByEventAndStatusIn(event,
+                    List.of(ParticipationRequestStatus.CONFIRMED));
+            if (requestsCount >= event.getParticipantLimit())
+                throw new ConflictDataException(
+                        String.format("On part. request create - " +
+                                "Event with id %s reached the limit of participants and User with id %s can't apply: ", eventId, userId));
+        }
 
         ParticipationRequest createdParticipationRequest = participationRequestRepository.save(
                 ParticipationRequest.builder()
                         .requester(requester)
                         .event(event)
-                        .status(event.getRequestModeration() ? ParticipationRequestStatus.CONFIRMED : ParticipationRequestStatus.PENDING)
+                        .status(event.getParticipantLimit() != 0 && event.getRequestModeration() ?
+                                ParticipationRequestStatus.PENDING : ParticipationRequestStatus.CONFIRMED)
                         .build()
         );
         log.info("Participation request is created: {}", createdParticipationRequest);
