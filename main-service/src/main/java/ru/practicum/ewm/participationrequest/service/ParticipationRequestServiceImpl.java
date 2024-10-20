@@ -98,7 +98,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         if (!participationRequest.getRequester().getId().equals(userId))
             throw new NotFoundException(String.format("On part. request cancel - " +
-                            "Request with id %s can't be canceled by not owner with id %s: ", requestId, userId));
+                    "Request with id %s can't be canceled by not owner with id %s: ", requestId, userId));
 
         participationRequest.setStatus(ParticipationRequestStatus.CANCELED);
         participationRequest = participationRequestRepository.save(participationRequest);

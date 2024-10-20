@@ -18,11 +18,13 @@ import static org.hibernate.validator.constraints.CompositionType.OR;
 @Null
 @NotBlank
 @ReportAsSingleViolation
-@Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER })
+@Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER})
 @Retention(RUNTIME)
-@Constraint(validatedBy = { })
+@Constraint(validatedBy = {})
 public @interface NullOrNotBlank {
     String message() default "must be null or not blank";
-    Class<?>[] groups() default { };
-    Class<? extends Payload>[] payload() default { };
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
 }

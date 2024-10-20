@@ -2,6 +2,8 @@ package ru.practicum.ewm.event.service;
 
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -19,12 +21,21 @@ import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.model.*;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
+import ru.practicum.ewm.participationrequest.dto.ParticipationRequestDto;
+import ru.practicum.ewm.participationrequest.mapper.ParticipationRequestMapper;
+import ru.practicum.ewm.participationrequest.model.ParticipationRequest;
+import ru.practicum.ewm.participationrequest.model.ParticipationRequestStatus;
+import ru.practicum.ewm.participationrequest.model.QParticipationRequest;
+import ru.practicum.ewm.participationrequest.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
@@ -36,6 +47,8 @@ public class EventServiceImpl implements EventService {
     private final LocationRepository locationRepository;
     private final EventMapper eventMapper;
     private final LocationMapper locationMapper;
+    private final ParticipationRequestRepository participationRequestRepository;
+    private final ParticipationRequestMapper participationRequestMapper;
 
     private Event checkAndGetEventByIdAndInitiatorId(Long eventId, Long initiatorId) {
         return eventRepository.findByIdAndInitiator_Id(eventId, initiatorId)
@@ -56,16 +69,38 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEventsByUserId(Long id) {
-        // TODO: не заполняется confirmedRequests
-        return eventRepository.findAllByInitiator_Id(id)
+        List<EventShortDto> eventShortDtos = eventRepository.findAllByInitiator_Id(id)
                 .stream()
                 .map(eventMapper::toShortDto)
-                .collect(Collectors.toList());
+                .toList();
+
+        BooleanExpression byStatusAndEventId = QParticipationRequest
+                .participationRequest
+                .status
+                .eq(ParticipationRequestStatus.CONFIRMED)
+                .and(QParticipationRequest.participationRequest
+                        .event.id.in(eventShortDtos.stream().map(EventShortDto::getId).toList()));
+
+        List<ParticipationRequest> participationRequestsList = (List<ParticipationRequest>)
+                participationRequestRepository.findAll(byStatusAndEventId);
+
+        for (EventShortDto eventShortDto : eventShortDtos) {
+            eventShortDto.setConfirmedRequests((int) participationRequestsList.stream()
+                    .filter(participationRequest -> participationRequest.getEvent().getId().equals(eventShortDto.getId()))
+                    .count());
+        }
+        return eventShortDtos;
     }
+
 
     @Override
     public EventFullDto getEventById(Long userId, Long eventId) {
-        return eventMapper.toFullDto(checkAndGetEventByIdAndInitiatorId(eventId, userId));
+        EventFullDto eventFullDto = eventMapper.toFullDto(checkAndGetEventByIdAndInitiatorId(eventId, userId));
+        eventFullDto.setConfirmedRequests(participationRequestRepository.findAllByEvent_IdAndStatus(eventId,
+                ParticipationRequestStatus.CONFIRMED).size());
+        log.info("Количество подтвержденных запросов: {}", participationRequestRepository.findAllByEvent_IdAndStatus(eventId,
+                ParticipationRequestStatus.CONFIRMED).size());
+        return eventFullDto;
     }
 
     @Override
@@ -125,8 +160,101 @@ public class EventServiceImpl implements EventService {
         int size = filters.getSize();
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size, new QSort(event.createdOn.desc()));
 
-        // TODO: не заполняется confirmedRequests
-        return eventMapper.toFullDto(eventRepository.findAll(builder, page));
+        var result = eventMapper.toFullDto(eventRepository.findAll(builder, page));
+
+        BooleanExpression byStatusAndEventId = QParticipationRequest
+                .participationRequest
+                .status
+                .eq(ParticipationRequestStatus.CONFIRMED)
+                .and(QParticipationRequest.participationRequest
+                        .event.id.in(result.stream().map(EventFullDto::getId).toList()));
+
+        List<ParticipationRequest> participationRequestsList = (List<ParticipationRequest>)
+                participationRequestRepository.findAll(byStatusAndEventId);
+
+        for (EventFullDto eventFullDto : result) {
+            eventFullDto.setConfirmedRequests((int) participationRequestsList.stream()
+                    .filter(participationRequest -> participationRequest.getEvent().getId().equals(eventFullDto.getId()))
+                    .count());
+        }
+        return result;
+    }
+
+    @Override
+    public List<ParticipationRequestDto> getEventAllParticipationRequests(Long userId, Long eventId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException("Такого события не существует: " + eventId));
+        checkEventOwner(event, userId);
+        return participationRequestRepository.findAllByEvent_IdAndStatus(eventId, ParticipationRequestStatus.PENDING)
+                .stream()
+                .map(participationRequestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public EventRequestStatusUpdateResultDto changeEventState(Long userId, Long eventId,
+                                                              EventRequestStatusUpdateRequestDto statusUpdateRequest) {
+        log.info("Change event state by user: {} and event id: {}", userId, eventId);
+
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException("Такого события не существует: " + eventId));
+        userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException("Такого пользователя не существует: " + userId));
+        checkEventOwner(event, userId);
+        int participantsLimit = event.getParticipantLimit();
+
+        List<ParticipationRequest> confirmedRequests = participationRequestRepository.findAllByEvent_IdAndStatus(eventId,
+                ParticipationRequestStatus.CONFIRMED);
+        List<ParticipationRequest> requestToChangeStatus = statusUpdateRequest.getRequestIds()
+                .stream()
+                .map(participationRequestRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+        //Не очень понял, как обрабатывать это условие:
+        // "если для события лимит заявок равен 0 или отключена пре-модерация заявок, то подтверждение заявок не требуется"
+        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+            log.info("Заявки подтверждать не требуется");
+            return null;
+        }
+
+        log.info("Заявки:  Лимит: {}, а заявок {}, разница между ними: {}", participantsLimit,
+                statusUpdateRequest.getRequestIds().size(), (participantsLimit
+                        - statusUpdateRequest.getRequestIds().size()));
+
+        if (statusUpdateRequest.getStatus().equals(ParticipationRequestStatus.CONFIRMED)) {
+            log.info("меняем статус заявок для статуса: {}", ParticipationRequestStatus.CONFIRMED);
+            if ((participantsLimit - (confirmedRequests.size()) - statusUpdateRequest.getRequestIds().size()) >= 0) {
+                for (ParticipationRequest request : requestToChangeStatus) {
+                    request.setStatus(ParticipationRequestStatus.CONFIRMED);
+                    participationRequestRepository.save(request);
+                }
+                return new EventRequestStatusUpdateResultDto(requestToChangeStatus
+                        .stream().map(participationRequestMapper::toDto)
+                        .toList()
+                        , null);
+            } else {
+                throw new ConflictDataException("слишком много участников. Лимит: " + participantsLimit +
+                        ", уже подтвержденных заявок: " + confirmedRequests.size() + ", а заявок на одобрение: " +
+                        statusUpdateRequest.getRequestIds().size() +
+                        ". Разница между ними: " + (participantsLimit - confirmedRequests.size() -
+                        statusUpdateRequest.getRequestIds().size()));
+            }
+        } else if (statusUpdateRequest.getStatus().equals(ParticipationRequestStatus.REJECTED)) {
+            log.info("меняем статус заявок для статуса: {}", ParticipationRequestStatus.REJECTED);
+            for (ParticipationRequest request : requestToChangeStatus) {
+                if (request.getStatus() == ParticipationRequestStatus.CONFIRMED) {
+                    throw new ConflictDataException("Заявка" + request.getStatus() + "уже подтверждена.");
+                }
+                request.setStatus(ParticipationRequestStatus.REJECTED);
+                participationRequestRepository.save(request);
+            }
+            return new EventRequestStatusUpdateResultDto(null, requestToChangeStatus
+                    .stream().map(participationRequestMapper::toDto)
+                    .toList());
+        }
+        return null;
     }
 
     private Location getOrCreateLocation(LocationDto locationDto) {
@@ -139,7 +267,7 @@ public class EventServiceImpl implements EventService {
             if (event.getState() != EventStates.PENDING) {
                 throw new ConflictDataException(
                         String.format("On Event admin update - " +
-                                "Event with id %s can't be published from the state %s: ",
+                                        "Event with id %s can't be published from the state %s: ",
                                 event.getId(), event.getState()));
             }
 
@@ -165,9 +293,12 @@ public class EventServiceImpl implements EventService {
     }
 
     private void setStateToEvent(UpdateEventUserRequestDto eventUpdateDto, Event event) {
-        if (eventUpdateDto.getStateAction().toString().toLowerCase()
-                .equals(EventStateActionPrivate.CANCEL_REVIEW.toString().toLowerCase())) {
+        if (eventUpdateDto.getStateAction().toString()
+                .equalsIgnoreCase(EventStateActionPrivate.CANCEL_REVIEW.toString())) {
             event.setState(EventStates.CANCELED);
+        } else if (eventUpdateDto.getStateAction().toString()
+                .equalsIgnoreCase(EventStateActionPrivate.SEND_TO_REVIEW.toString())) {
+            event.setState(EventStates.PENDING);
         }
     }
 
@@ -180,5 +311,11 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Дата события должна быть +2 часа вперед");
         }
 
+    }
+
+    private void checkEventOwner(Event event, Long userId) {
+        if (!Objects.equals(event.getInitiator().getId(), userId)) {
+            throw new ValidationException("Событие создал другой пользователь");
+        }
     }
 }

@@ -35,6 +35,7 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "initiator_id")
     private User initiator;
+    @Enumerated(EnumType.STRING)
     private EventStates state = EventStates.PENDING;
     private int views;
     private LocalDateTime publishedOn;
