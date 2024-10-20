@@ -293,11 +293,11 @@ public class EventServiceImpl implements EventService {
     }
 
     private void setStateToEvent(UpdateEventUserRequestDto eventUpdateDto, Event event) {
-        if (eventUpdateDto.getStateAction().toString().toLowerCase()
-                .equals(EventStateActionPrivate.CANCEL_REVIEW.toString().toLowerCase())) {
+        if (eventUpdateDto.getStateAction().toString()
+                .equalsIgnoreCase(EventStateActionPrivate.CANCEL_REVIEW.toString())) {
             event.setState(EventStates.CANCELED);
-        } else if (eventUpdateDto.getStateAction().toString().toLowerCase()
-                .equals(EventStateActionPrivate.SEND_TO_REVIEW.toString().toLowerCase())) {
+        } else if (eventUpdateDto.getStateAction().toString()
+                .equalsIgnoreCase(EventStateActionPrivate.SEND_TO_REVIEW.toString())) {
             event.setState(EventStates.PENDING);
         }
     }

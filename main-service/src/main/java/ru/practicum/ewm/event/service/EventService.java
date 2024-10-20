@@ -1,8 +1,6 @@
 package ru.practicum.ewm.event.service;
 
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequestDto;
-import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResultDto;
 import ru.practicum.ewm.participationrequest.dto.ParticipationRequestDto;
 
 import java.util.List;
