@@ -28,18 +28,21 @@ public class AdminEventController {
     }
 
     @GetMapping
-    public List<EventFullDto> get(@RequestParam List<Long> users, @RequestParam List<EventStates> states,
-                                  @RequestParam List<Long> categories, @RequestParam String rangeStart,
-                                  @RequestParam String rangeEnd, @RequestParam(defaultValue = "0") int from,
+    public List<EventFullDto> get(@RequestParam(required = false) List<Long> users,
+                                  @RequestParam(required = false) List<EventStates> states,
+                                  @RequestParam(required = false) List<Long> categories,
+                                  @RequestParam(required = false) String rangeStart,
+                                  @RequestParam(required = false) String rangeEnd,
+                                  @RequestParam(defaultValue = "0") int from,
                                   @RequestParam(defaultValue = "10") int size) {
         EventsFilterParamsDto filters = EventsFilterParamsDto.builder()
                 .users(users)
                 .states(states)
                 .categories(categories)
-                .rangeStart(LocalDateTime.parse(
+                .rangeStart(rangeStart == null ? null : LocalDateTime.parse(
                         URLDecoder.decode(rangeStart, StandardCharsets.UTF_8), DateTimeUtil.DATE_TIME_FORMATTER)
                 )
-                .rangeEnd(LocalDateTime.parse(
+                .rangeEnd(rangeEnd == null ? null : LocalDateTime.parse(
                         URLDecoder.decode(rangeEnd, StandardCharsets.UTF_8), DateTimeUtil.DATE_TIME_FORMATTER)
                 )
                 .from(from)

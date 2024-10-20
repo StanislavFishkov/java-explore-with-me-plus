@@ -35,4 +35,5 @@ public class EventFullDto {
     private LocalDateTime createdOn;
     @JsonFormat(pattern = DateTimeUtil.DATE_TIME_FORMAT)
     private LocalDateTime publishedOn;
+    private int confirmedRequests;
 }

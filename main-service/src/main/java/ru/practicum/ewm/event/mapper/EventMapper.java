@@ -15,9 +15,10 @@ public interface EventMapper {
     @Mapping(target = "confirmedRequests", ignore = true)
     EventShortDto toShortDto(Event event);
 
+    @Mapping(target = "confirmedRequests", ignore = true)
     EventFullDto toFullDto(Event event);
 
-    List<EventFullDto> toFullDto(List<Event> event);
+    List<EventFullDto> toFullDto(Iterable<Event> event);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", source = "category")

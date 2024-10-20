@@ -1,4 +1,4 @@
-package ru.practicum.ewm.categories.countroller;
+package ru.practicum.ewm.categories.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

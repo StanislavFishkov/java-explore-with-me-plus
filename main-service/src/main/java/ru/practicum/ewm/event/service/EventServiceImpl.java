@@ -1,8 +1,11 @@
 package ru.practicum.ewm.event.service;
 
 
+import com.querydsl.core.BooleanBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.querydsl.QSort;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
@@ -99,7 +102,31 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> get(EventsFilterParamsDto filters) {
-        return List.of();
+        QEvent event = QEvent.event;
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if (filters.getUsers() != null && !filters.getUsers().isEmpty())
+            builder.and(event.initiator.id.in(filters.getUsers()));
+
+        if (filters.getStates() != null && !filters.getStates().isEmpty())
+            builder.and(event.state.in(filters.getStates()));
+
+        if (filters.getCategories() != null && !filters.getCategories().isEmpty())
+            builder.and(event.category.id.in(filters.getCategories()));
+
+        if (filters.getRangeStart() != null)
+            builder.and(event.eventDate.goe(filters.getRangeStart()));
+
+        if (filters.getRangeEnd() != null)
+            builder.and(event.eventDate.loe(filters.getRangeEnd()));
+
+        int from = filters.getFrom();
+        int size = filters.getSize();
+        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size, new QSort(event.createdOn.desc()));
+
+        // TODO: не заполняется confirmedRequests
+        return eventMapper.toFullDto(eventRepository.findAll(builder, page));
     }
 
     private Location getOrCreateLocation(LocationDto locationDto) {
