@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.querydsl.QSort;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.categories.model.Category;
@@ -68,8 +69,9 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getEventsByUserId(Long id) {
-        List<EventShortDto> eventShortDtos = eventRepository.findAllByInitiator_Id(id)
+    public List<EventShortDto> getEventsByUserId(Long id, int from, int size) {
+        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size, Sort.by(Sort.Order.desc("eventDate")));
+        List<EventShortDto> eventShortDtos = eventRepository.findAllByInitiator_Id(id, page)
                 .stream()
                 .map(eventMapper::toShortDto)
                 .toList();
@@ -92,7 +94,6 @@ public class EventServiceImpl implements EventService {
         return eventShortDtos;
     }
 
-
     @Override
     public EventFullDto getEventById(Long userId, Long eventId) {
         EventFullDto eventFullDto = eventMapper.toFullDto(checkAndGetEventByIdAndInitiatorId(eventId, userId));
@@ -106,6 +107,13 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequestDto eventUpdateDto) {
         Event event = checkAndGetEventByIdAndInitiatorId(eventId, userId);
+
+        if (event.getState() == EventStates.PUBLISHED)
+            throw new ConflictDataException(
+                    String.format("On Event private update - " +
+                                    "Event with id %s can't be changed because it is published.", event.getId()));
+        checkEventTime(eventUpdateDto.getEventDate());
+
         eventMapper.update(event, eventUpdateDto, getOrCreateLocation(eventUpdateDto.getLocation()));
         if (eventUpdateDto.getStateAction() != null) {
             setStateToEvent(eventUpdateDto, event);
@@ -300,6 +308,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private void checkEventTime(LocalDateTime eventDate) {
+        if (eventDate == null) return;
         log.info("Проверяем дату события на корректность: {}", eventDate);
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime correctEventTime = eventDate.plusHours(2);
@@ -307,7 +316,6 @@ public class EventServiceImpl implements EventService {
             log.info("дата не корректна");
             throw new ValidationException("Дата события должна быть +2 часа вперед");
         }
-
     }
 
     private void checkEventOwner(Event event, Long userId) {
