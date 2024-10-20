@@ -34,7 +34,7 @@ CREATE TABLE IF NOT exists events (
 	views BIGINT NOT NULL,
 	description varchar(7000) NOT NULL,
 	event_date timestamp NOT NULL,
-	participant_limit smallint NOT NULL,
+	participant_limit INTEGER NOT NULL,
 	created_on timestamp NOT NULL,
 	published_on timestamp,
 	CONSTRAINT pk_events PRIMARY KEY (id),

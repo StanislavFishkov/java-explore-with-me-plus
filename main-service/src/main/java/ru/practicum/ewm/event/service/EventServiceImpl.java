@@ -136,7 +136,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventFullDto> get(EventsFilterParamsDto filters) {
+    public List<EventFullDto> get(EventsFilterParamsDto filters, int from, int size) {
         QEvent event = QEvent.event;
 
         BooleanBuilder builder = new BooleanBuilder();
@@ -156,8 +156,6 @@ public class EventServiceImpl implements EventService {
         if (filters.getRangeEnd() != null)
             builder.and(event.eventDate.loe(filters.getRangeEnd()));
 
-        int from = filters.getFrom();
-        int size = filters.getSize();
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size, new QSort(event.createdOn.desc()));
 
         var result = eventMapper.toFullDto(eventRepository.findAll(builder, page));
