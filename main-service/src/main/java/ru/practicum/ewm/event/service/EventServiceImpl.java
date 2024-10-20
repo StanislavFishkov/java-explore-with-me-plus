@@ -230,8 +230,7 @@ public class EventServiceImpl implements EventService {
                 }
                 return new EventRequestStatusUpdateResultDto(requestToChangeStatus
                         .stream().map(participationRequestMapper::toDto)
-                        .toList()
-                        , null);
+                        .toList(), null);
             } else {
                 throw new ConflictDataException("слишком много участников. Лимит: " + participantsLimit +
                         ", уже подтвержденных заявок: " + confirmedRequests.size() + ", а заявок на одобрение: " +

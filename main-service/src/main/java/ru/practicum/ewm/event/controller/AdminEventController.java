@@ -1,6 +1,8 @@
 package ru.practicum.ewm.event.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFullDto;
@@ -23,8 +25,9 @@ public class AdminEventController {
     }
 
     @GetMapping
-    public List<EventFullDto> get(EventsFilterParamsDto filters, @RequestParam(defaultValue = "0") int from,
-                                  @RequestParam(defaultValue = "10") int size) {
+    public List<EventFullDto> get(EventsFilterParamsDto filters,
+                                  @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                  @Positive @RequestParam(defaultValue = "10") int size) {
         return eventService.get(filters, from, size);
     }
 }
