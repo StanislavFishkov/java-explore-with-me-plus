@@ -14,4 +14,6 @@ public interface EventService {
     EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequestDto eventUpdateDto);
 
     EventFullDto update(Long eventId, UpdateEventAdminRequestDto updateEventAdminRequestDto);
+
+    List<EventFullDto> get(EventsFilterParamsDto filters);
 }

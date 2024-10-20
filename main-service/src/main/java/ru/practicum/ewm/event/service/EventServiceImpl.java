@@ -97,6 +97,11 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(event);
     }
 
+    @Override
+    public List<EventFullDto> get(EventsFilterParamsDto filters) {
+        return List.of();
+    }
+
     private Location getOrCreateLocation(LocationDto locationDto) {
         return locationDto == null ? null : locationRepository.findByLatAndLon(locationDto.getLat(), locationDto.getLon())
                 .orElseGet(() -> locationRepository.save(locationMapper.toLocation(locationDto)));
