@@ -30,6 +30,7 @@ public class ParticipationRequest {
     @ManyToOne
     @JoinColumn(name = "event_id")
     private Event event;
+
     @Enumerated(EnumType.STRING)
     private ParticipationRequestStatus status;
 

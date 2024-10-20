@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import ru.practicum.ewm.core.util.DateTimeUtil;
 import ru.practicum.ewm.event.model.EventStates;
 
 import java.time.LocalDateTime;
@@ -17,8 +19,8 @@ public class EventsFilterParamsDto {
     List<Long> users;
     List<EventStates> states;
     List<Long> categories;
+    @DateTimeFormat(pattern = DateTimeUtil.DATE_TIME_FORMAT)
     LocalDateTime rangeStart;
+    @DateTimeFormat(pattern = DateTimeUtil.DATE_TIME_FORMAT)
     LocalDateTime rangeEnd;
-    int from;
-    int size;
 }

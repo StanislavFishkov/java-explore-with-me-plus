@@ -17,6 +17,7 @@ public class CompilationRequestDto {
     @NotBlank
     @Size(max = 50)
     private String title;
+    @Builder.Default
     private Boolean pinned = false;
     private List<Long> events;
 }
