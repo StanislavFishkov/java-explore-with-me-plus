@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.ewm.core.util.DateTimeUtil;
-import ru.practicum.ewm.event.model.EventStates;
+import ru.practicum.ewm.core.validation.DateTimeRange;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,12 +15,21 @@ import java.util.List;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventsFilterParamsDto {
-    List<Long> users;
-    List<EventStates> states;
+@DateTimeRange(before = "rangeStart", after = "rangeEnd")
+public class EventPublicFilterParamsDto {
+    String text;
     List<Long> categories;
+    Boolean paid;
     @DateTimeFormat(pattern = DateTimeUtil.DATE_TIME_FORMAT)
     LocalDateTime rangeStart;
     @DateTimeFormat(pattern = DateTimeUtil.DATE_TIME_FORMAT)
     LocalDateTime rangeEnd;
+    @Builder.Default
+    Boolean onlyAvailable = false;
+    EventSort sort;
+
+    public enum EventSort {
+        EVENT_DATE,
+        VIEWS
+    }
 }

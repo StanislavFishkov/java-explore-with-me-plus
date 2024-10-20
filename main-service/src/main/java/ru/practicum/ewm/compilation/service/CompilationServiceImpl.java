@@ -12,6 +12,7 @@ import ru.practicum.ewm.compilation.mapper.CompilationMapper;
 import ru.practicum.ewm.compilation.model.Compilation;
 import ru.practicum.ewm.compilation.repository.CompilationRepository;
 import ru.practicum.ewm.core.error.exception.NotFoundException;
+import ru.practicum.ewm.core.util.PagingUtil;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.repository.EventRepository;
@@ -32,7 +33,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
         log.info("getCompilations params: pinned = {}, from = {}, size = {}", pinned, from, size);
-        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
+        PageRequest page = PagingUtil.pageOf(from, size);
 
         return compilationRepository.findAllByPinned(pinned, page)
                 .map(compilation -> compilationMapper.toDto(compilation, eventMapper.toEventShortDtoList(compilation.getEvents())))

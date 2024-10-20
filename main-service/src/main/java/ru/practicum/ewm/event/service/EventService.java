@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.participationrequest.dto.ParticipationRequestDto;
 
@@ -16,7 +17,11 @@ public interface EventService {
 
     EventFullDto update(Long eventId, UpdateEventAdminRequestDto updateEventAdminRequestDto);
 
-    List<EventFullDto> get(EventsFilterParamsDto filters, int from, int size);
+    EventFullDto get(Long eventId, HttpServletRequest request);
+
+    List<EventFullDto> get(EventAdminFilterParamsDto filters, int from, int size);
+
+    List<EventShortDto> get(EventPublicFilterParamsDto filters, int from, int size, HttpServletRequest request);
 
     List<ParticipationRequestDto> getEventAllParticipationRequests(Long eventId, Long userId);
 
