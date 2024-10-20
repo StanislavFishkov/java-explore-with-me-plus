@@ -160,10 +160,24 @@ public class EventServiceImpl implements EventService {
         int size = filters.getSize();
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size, new QSort(event.createdOn.desc()));
 
+        var result = eventMapper.toFullDto(eventRepository.findAll(builder, page));
 
-        return eventMapper.toFullDto(eventRepository.findAll(builder, page)).stream().peek(eventFullDto ->
-                eventFullDto.setConfirmedRequests((participationRequestRepository.findAllByEvent_IdAndStatus(eventFullDto.getId(),
-                        ParticipationRequestStatus.CONFIRMED).size()))).toList();
+        BooleanExpression byStatusAndEventId = QParticipationRequest
+                .participationRequest
+                .status
+                .eq(ParticipationRequestStatus.CONFIRMED)
+                .and(QParticipationRequest.participationRequest
+                        .event.id.in(result.stream().map(EventFullDto::getId).toList()));
+
+        List<ParticipationRequest> participationRequestsList = (List<ParticipationRequest>)
+                participationRequestRepository.findAll(byStatusAndEventId);
+
+        for (EventFullDto eventFullDto : result) {
+            eventFullDto.setConfirmedRequests((int) participationRequestsList.stream()
+                    .filter(participationRequest -> participationRequest.getEvent().getId().equals(eventFullDto.getId()))
+                    .count());
+        }
+        return result;
     }
 
     @Override
