@@ -20,6 +20,8 @@ public interface EventMapper {
 
     List<EventFullDto> toFullDto(Iterable<Event> event);
 
+    List<EventShortDto> toEventShortDtoList(Iterable<Event> events);
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", source = "category")
     @Mapping(target = "initiator", source = "userFromRequest")
