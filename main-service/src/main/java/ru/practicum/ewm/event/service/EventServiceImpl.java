@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.service;
 
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import ru.practicum.ewm.participationrequest.dto.ParticipationRequestDto;
 import ru.practicum.ewm.participationrequest.mapper.ParticipationRequestMapper;
 import ru.practicum.ewm.participationrequest.model.ParticipationRequest;
 import ru.practicum.ewm.participationrequest.model.ParticipationRequestStatus;
+import ru.practicum.ewm.participationrequest.model.QParticipationRequest;
 import ru.practicum.ewm.participationrequest.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
@@ -67,16 +69,29 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEventsByUserId(Long id) {
-        // TODO: не заполняется confirmedRequests
-
-
-        return eventRepository.findAllByInitiator_Id(id)
+        List<EventShortDto> eventShortDtos = eventRepository.findAllByInitiator_Id(id)
                 .stream()
                 .map(eventMapper::toShortDto)
-                .peek(event -> event.setConfirmedRequests(participationRequestRepository.findAllByEvent_IdAndStatus(event.getId(),
-                        ParticipationRequestStatus.CONFIRMED).size()))
                 .toList();
+
+        BooleanExpression byStatusAndEventId = QParticipationRequest
+                .participationRequest
+                .status
+                .eq(ParticipationRequestStatus.CONFIRMED)
+                .and(QParticipationRequest.participationRequest
+                        .event.id.in(eventShortDtos.stream().map(EventShortDto::getId).toList()));
+
+        List<ParticipationRequest> participationRequestsList = (List<ParticipationRequest>)
+                participationRequestRepository.findAll(byStatusAndEventId);
+
+        for (EventShortDto eventShortDto : eventShortDtos) {
+            eventShortDto.setConfirmedRequests((int) participationRequestsList.stream()
+                    .filter(participationRequest -> participationRequest.getEvent().getId().equals(eventShortDto.getId()))
+                    .count());
+        }
+        return eventShortDtos;
     }
+
 
     @Override
     public EventFullDto getEventById(Long userId, Long eventId) {
@@ -145,7 +160,7 @@ public class EventServiceImpl implements EventService {
         int size = filters.getSize();
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size, new QSort(event.createdOn.desc()));
 
-        // TODO: не заполняется confirmedRequests
+
         return eventMapper.toFullDto(eventRepository.findAll(builder, page)).stream().peek(eventFullDto ->
                 eventFullDto.setConfirmedRequests((participationRequestRepository.findAllByEvent_IdAndStatus(eventFullDto.getId(),
                         ParticipationRequestStatus.CONFIRMED).size()))).toList();
@@ -164,8 +179,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventRequestStatusUpdateResult changeEventState(Long userId, Long eventId,
-                                                           EventRequestStatusUpdateRequest statusUpdateRequest) {
+    public EventRequestStatusUpdateResultDto changeEventState(Long userId, Long eventId,
+                                                              EventRequestStatusUpdateRequestDto statusUpdateRequest) {
         log.info("Change event state by user: {} and event id: {}", userId, eventId);
 
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
@@ -201,7 +216,7 @@ public class EventServiceImpl implements EventService {
                     request.setStatus(ParticipationRequestStatus.CONFIRMED);
                     participationRequestRepository.save(request);
                 }
-                return new EventRequestStatusUpdateResult(requestToChangeStatus
+                return new EventRequestStatusUpdateResultDto(requestToChangeStatus
                         .stream().map(participationRequestMapper::toDto)
                         .toList()
                         , null);
@@ -221,7 +236,7 @@ public class EventServiceImpl implements EventService {
                 request.setStatus(ParticipationRequestStatus.REJECTED);
                 participationRequestRepository.save(request);
             }
-            return new EventRequestStatusUpdateResult(null, requestToChangeStatus
+            return new EventRequestStatusUpdateResultDto(null, requestToChangeStatus
                     .stream().map(participationRequestMapper::toDto)
                     .toList());
         }

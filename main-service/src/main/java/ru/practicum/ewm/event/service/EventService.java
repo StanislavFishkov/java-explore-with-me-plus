@@ -1,8 +1,8 @@
 package ru.practicum.ewm.event.service;
 
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.model.EventRequestStatusUpdateRequest;
-import ru.practicum.ewm.event.model.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequestDto;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResultDto;
 import ru.practicum.ewm.participationrequest.dto.ParticipationRequestDto;
 
 import java.util.List;
@@ -22,6 +22,6 @@ public interface EventService {
 
     List<ParticipationRequestDto> getEventAllParticipationRequests(Long eventId, Long userId);
 
-    EventRequestStatusUpdateResult changeEventState(Long userId, Long eventId,
-                                                    EventRequestStatusUpdateRequest requestStatusUpdateRequest);
+    EventRequestStatusUpdateResultDto changeEventState(Long userId, Long eventId,
+                                                       EventRequestStatusUpdateRequestDto requestStatusUpdateRequest);
 }

@@ -10,8 +10,8 @@ import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequestDto;
-import ru.practicum.ewm.event.model.EventRequestStatusUpdateRequest;
-import ru.practicum.ewm.event.model.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequestDto;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResultDto;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.participationrequest.dto.ParticipationRequestDto;
 
@@ -62,9 +62,9 @@ public class PrivateEventController {
 
     //Изменение статуса (подтверждена, отменена) заявок на участие в событии текущего пользователя
     @PatchMapping(path = "/users/{userId}/events/{eventId}/requests")
-    public EventRequestStatusUpdateResult updatetEventRequestStatus(@PathVariable("userId") Long userId,
-                                                                    @PathVariable("eventId") Long eventId,
-                                                                    @RequestBody EventRequestStatusUpdateRequest request) {
+    public EventRequestStatusUpdateResultDto updatedEventRequestStatus(@PathVariable("userId") Long userId,
+                                                                       @PathVariable("eventId") Long eventId,
+                                                                       @RequestBody EventRequestStatusUpdateRequestDto request) {
         return eventService.changeEventState(userId, eventId, request);
     }
 
