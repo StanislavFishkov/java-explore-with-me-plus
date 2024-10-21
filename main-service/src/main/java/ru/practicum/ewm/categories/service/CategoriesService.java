@@ -12,7 +12,7 @@ public interface CategoriesService {
 
     void deleteCategory(Long id);
 
-    CategoryDto getCategoryBy(Long id);
+    CategoryDto findBy(Long id);
 
-    List<CategoryDto> findBy(Long id, Long limit);
+    List<CategoryDto> findBy(Integer id, Integer limit);
 }
