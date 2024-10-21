@@ -3,6 +3,7 @@ package ru.practicum.ewm.event.service;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPQLTemplates;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -404,7 +405,7 @@ public class EventServiceImpl implements EventService {
         BooleanBuilder requestBuilder = new BooleanBuilder();
         requestBuilder.and(qRequest.status.eq(ParticipationRequestStatus.CONFIRMED)).and(qRequest.event.in(events));
 
-        JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(entityManager);
+        JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(JPQLTemplates.DEFAULT, entityManager);
 
         Map<Long, Long> confirmedRequests = jpaQueryFactory.selectFrom(qRequest)
                 .select(qRequest.event.id, qRequest.count())
