@@ -2,6 +2,7 @@ package ru.practicum.ewm.categories.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.categories.dto.CategoryDto;
@@ -10,6 +11,10 @@ import ru.practicum.ewm.categories.mapper.CategoryMapper;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
 import ru.practicum.ewm.core.error.exception.NotFoundException;
+
+import java.awt.print.Pageable;
+import java.util.Collections;
+import java.util.List;
 
 @Transactional(readOnly = true)
 @Service
@@ -43,5 +48,20 @@ public class CategoriesServiceImpl implements CategoriesService {
     public void deleteCategory(Long id) {
         categoriesRepository.deleteById(id);
         log.info("Category deleted with id: {}", id);
+    }
+    @Transactional
+    @Override
+    public CategoryDto getCategoryBy(Long id) {
+        log.info("start getCategory");
+        Category category = categoriesRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Category with id " + id + " not found"));
+        log.info("Category is found: {}", category);
+        return categoryMapper.toDto(category);
+    }
+
+    @Override
+    public List<CategoryDto> findBy(Long id, Long limit) {
+        PageRequest page = PageRequest.of(Math.toIntExact(id > 0 ? id / limit : 0), Math.toIntExact(limit));
+        return Collections.singletonList(categoryMapper.toDto((Category) categoriesRepository.findAllByPinned(id, limit)));
     }
 }
