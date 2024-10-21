@@ -1,6 +1,8 @@
 package ru.practicum.ewm.event.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,8 +32,10 @@ public class PrivateEventController {
 
     //Получение событий, добавленных текущим пользователем
     @GetMapping(path = "/users/{userId}/events")
-    public List<EventShortDto> getEvent(@PathVariable("userId") Long userId) {
-        return eventService.getEventsByUserId(userId);
+    public List<EventShortDto> getEvent(@PathVariable("userId") Long userId,
+                                        @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                        @Positive @RequestParam(defaultValue = "10") int size) {
+        return eventService.getEventsByUserId(userId, from, size);
     }
 
     //Получение полной информации о событии добавленном текущим пользователем

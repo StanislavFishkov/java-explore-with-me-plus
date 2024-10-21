@@ -15,6 +15,8 @@ public interface EventMapper {
     @Mapping(target = "confirmedRequests", ignore = true)
     EventShortDto toShortDto(Event event);
 
+    List<EventShortDto> toShortDto(Iterable<Event> event);
+
     @Mapping(target = "confirmedRequests", ignore = true)
     EventFullDto toFullDto(Event event);
 
