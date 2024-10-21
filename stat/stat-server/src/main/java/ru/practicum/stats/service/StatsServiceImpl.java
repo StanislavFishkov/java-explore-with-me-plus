@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.stats.dto.HitDto;
 import ru.practicum.stats.dto.StatsDto;
+import ru.practicum.stats.error.ValidationException;
 import ru.practicum.stats.mapper.EndpointHitMapper;
 import ru.practicum.stats.mapper.ViewStatsMapper;
 import ru.practicum.stats.model.Stats;
@@ -31,6 +32,10 @@ public class StatsServiceImpl implements StatsService {
     @Override
     public List<StatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         List<ViewStatsProjection> projections;
+
+        if (end.isBefore(start)) {
+            throw new ValidationException(String.format("End date %s is before start date %s", end, start));
+        }
 
         if (uris != null && !uris.isEmpty()) {
             if (unique) {

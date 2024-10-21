@@ -39,6 +39,8 @@ public class StatsClientImpl implements StatClient {
             rest.exchange("/hit", HttpMethod.POST, requestEntity, Object.class);
         } catch (HttpStatusCodeException e) {
             log.error("Hit stats was not successful with code {} and message {}", e.getStatusCode(), e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Hit stats was not successful with exception {} and message {}", e.getClass().getName(), e.getMessage(), e);
         }
     }
 
@@ -69,6 +71,9 @@ public class StatsClientImpl implements StatClient {
             statServerResponse = rest.exchange(uri, HttpMethod.GET, requestEntity, StatsDto[].class);
         } catch (HttpStatusCodeException e) {
             log.error("Get stats was not successful with code {} and message {}", e.getStatusCode(), e.getMessage(), e);
+            return List.of();
+        } catch (Exception e) {
+            log.error("Get stats was not successful with exception {} and message {}", e.getClass().getName(), e.getMessage(), e);
             return List.of();
         }
         statServerResponse.getBody();
