@@ -1,8 +1,6 @@
 package ru.practicum.stats.controller;
 
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,7 +23,6 @@ import java.util.List;
 @RequestMapping
 public class StatsController {
 
-    private static final Logger log = LoggerFactory.getLogger(StatsController.class);
     private final StatsService statsService;
 
     public StatsController(StatsService statsService) {
@@ -51,7 +48,6 @@ public class StatsController {
                 URLDecoder.decode(end, StandardCharsets.UTF_8),
                 DateTimeUtil.DATE_TIME_FORMATTER
         );
-        log.info("start: {}, end: {}", startTime, endTime);
         return statsService.getStats(startTime, endTime, uris, unique);
     }
 }

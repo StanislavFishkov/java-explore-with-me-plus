@@ -32,7 +32,7 @@ public class CategoriesServiceImpl implements CategoriesService {
 
     @Transactional
     @Override
-    public CategoryDto updateCategory(long id, NewCategoryDto updateCategoryDto) {
+    public CategoryDto updateCategory(Long id, NewCategoryDto updateCategoryDto) {
         log.info("start updateCategory");
         Category category = categoriesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category with id " + id + " not found"));
@@ -58,9 +58,9 @@ public class CategoriesServiceImpl implements CategoriesService {
     }
 
     @Override
-    public List<CategoryDto> findBy(Integer id, Integer limit) {
-        log.info("start getCategory by from {} to {}", id, limit);
-        return categoriesRepository.findAll(PagingUtil.pageOf(id, limit)).stream()
+    public List<CategoryDto> findBy(int from, int size) {
+        log.info("start getCategory by from {} to {}", from, size);
+        return categoriesRepository.findAll(PagingUtil.pageOf(from, size)).stream()
                 .map(categoryMapper::toDto).toList();
     }
 }
