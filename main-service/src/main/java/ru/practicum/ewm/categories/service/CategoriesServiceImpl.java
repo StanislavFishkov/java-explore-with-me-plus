@@ -10,6 +10,9 @@ import ru.practicum.ewm.categories.mapper.CategoryMapper;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
 import ru.practicum.ewm.core.error.exception.NotFoundException;
+import ru.practicum.ewm.core.util.PagingUtil;
+
+import java.util.List;
 
 @Transactional(readOnly = true)
 @Service
@@ -29,7 +32,7 @@ public class CategoriesServiceImpl implements CategoriesService {
 
     @Transactional
     @Override
-    public CategoryDto updateCategory(long id, NewCategoryDto updateCategoryDto) {
+    public CategoryDto updateCategory(Long id, NewCategoryDto updateCategoryDto) {
         log.info("start updateCategory");
         Category category = categoriesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category with id " + id + " not found"));
@@ -43,5 +46,21 @@ public class CategoriesServiceImpl implements CategoriesService {
     public void deleteCategory(Long id) {
         categoriesRepository.deleteById(id);
         log.info("Category deleted with id: {}", id);
+    }
+
+    @Override
+    public CategoryDto findBy(Long id) {
+        log.info("start getCategory by id:{}", id);
+        Category category = categoriesRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Category with id " + id + " not found"));
+        log.info("Category is found: {}", category);
+        return categoryMapper.toDto(category);
+    }
+
+    @Override
+    public List<CategoryDto> findBy(int from, int size) {
+        log.info("start getCategory by from {} to {}", from, size);
+        return categoriesRepository.findAll(PagingUtil.pageOf(from, size)).stream()
+                .map(categoryMapper::toDto).toList();
     }
 }
