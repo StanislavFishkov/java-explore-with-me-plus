@@ -2,8 +2,10 @@ package ru.practicum.ewm.event.service;
 
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.support.QueryBase;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPQLTemplates;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -241,22 +243,19 @@ public class EventServiceImpl implements EventService {
             if (filters.getRangeEnd() != null)
                 builder.and(qEvent.eventDate.loe(filters.getRangeEnd()));
         }
-//TODO:
-//        if (filters.getOnlyAvailable() != null)
-//            builder.and(qEvent.participantLimit.gt(qEvent.));
 
         PageRequest page = PagingUtil.pageOf(from, size);
-        if (filters.getSort() != null)
-            page = switch (filters.getSort()) {
-                case EVENT_DATE -> page.withSort(new QSort(qEvent.eventDate.desc()));
-                case VIEWS -> page.withSort(new QSort(qEvent.views.desc()));
-            };
+        if (filters.getSort() != null && filters.getSort() == EventPublicFilterParamsDto.EventSort.EVENT_DATE)
+            page.withSort(new QSort(qEvent.eventDate.desc()));
 
         List<Event> events = eventRepository.findAll(builder, page).toList();
 
         List<EventShortDto> eventsDto = eventMapper.toShortDto(events);
-        populateWithConfirmedRequests(events, eventsDto);
+        populateWithConfirmedRequests(events, eventsDto, true);
         populateWithStats(eventsDto);
+
+        if (filters.getSort() != null && filters.getSort() == EventPublicFilterParamsDto.EventSort.VIEWS)
+            Collections.sort(eventsDto, Comparator.comparing(EventShortDto::getViews).reversed());
 
         hitStat(request);
         return eventsDto;
@@ -401,16 +400,29 @@ public class EventServiceImpl implements EventService {
     }
 
     private void populateWithConfirmedRequests(List<Event> events, List<?> eventsDto) {
+        populateWithConfirmedRequests(events, eventsDto, null);
+    }
+
+    private void populateWithConfirmedRequests(List<Event> events, List<?> eventsDto, Boolean filterOnlyAvailable) {
         QParticipationRequest qRequest = QParticipationRequest.participationRequest;
         BooleanBuilder requestBuilder = new BooleanBuilder();
         requestBuilder.and(qRequest.status.eq(ParticipationRequestStatus.CONFIRMED)).and(qRequest.event.in(events));
 
         JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(JPQLTemplates.DEFAULT, entityManager);
 
-        Map<Long, Long> confirmedRequests = jpaQueryFactory.selectFrom(qRequest)
+        var query = jpaQueryFactory.selectFrom(qRequest)
                 .select(qRequest.event.id, qRequest.count())
                 .where(requestBuilder)
-                .groupBy(qRequest.event.id)
+                .groupBy(qRequest.event);
+
+        if (filterOnlyAvailable != null && filterOnlyAvailable)
+            query = query
+                    .having(
+                            qRequest.event.participantLimit.eq(0)
+                                    .or(qRequest.event.participantLimit.lt(qRequest.count()))
+                    );
+
+        Map<Long, Long> confirmedRequests = query
                 .transform(groupBy(qRequest.event.id).as(qRequest.id.count()));
 
         eventsDto
