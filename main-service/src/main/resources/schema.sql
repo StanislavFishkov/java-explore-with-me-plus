@@ -31,7 +31,6 @@ CREATE TABLE IF NOT exists events (
 	request_moderation BOOL NOT NULL,
 	title varchar(120) NOT NULL,
 	state varchar(9) NOT NULL,
-	views BIGINT NOT NULL,
 	description varchar(7000) NOT NULL,
 	event_date timestamp NOT NULL,
 	participant_limit INTEGER NOT NULL,

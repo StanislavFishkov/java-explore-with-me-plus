@@ -13,11 +13,13 @@ import java.util.List;
 @Mapper(componentModel = "spring", uses = {LocationMapper.class, UserMapper.class})
 public interface EventMapper {
     @Mapping(target = "confirmedRequests", ignore = true)
+    @Mapping(target = "views", ignore = true)
     EventShortDto toShortDto(Event event);
 
     List<EventShortDto> toShortDto(Iterable<Event> event);
 
     @Mapping(target = "confirmedRequests", ignore = true)
+    @Mapping(target = "views", ignore = true)
     EventFullDto toFullDto(Event event);
 
     List<EventFullDto> toFullDto(Iterable<Event> event);
@@ -32,7 +34,6 @@ public interface EventMapper {
     @Mapping(target = "paid", defaultValue = "false")
     @Mapping(target = "requestModeration", defaultValue = "true")
     @Mapping(target = "state", ignore = true)
-    @Mapping(target = "views", ignore = true)
     @Mapping(target = "publishedOn", ignore = true)
     Event toEvent(NewEventDto newEventDto, Category category, User userFromRequest, Location location);
 
@@ -41,7 +42,6 @@ public interface EventMapper {
     @Mapping(target = "initiator", ignore = true)
     @Mapping(target = "location", source = "location")
     @Mapping(target = "state", ignore = true)
-    @Mapping(target = "views", ignore = true)
     @Mapping(target = "publishedOn", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Event update(@MappingTarget Event event, UpdateEventUserRequestDto eventUpdateDto, Location location);
@@ -51,7 +51,6 @@ public interface EventMapper {
     @Mapping(target = "initiator", ignore = true)
     @Mapping(target = "location", source = "location")
     @Mapping(target = "state", ignore = true)
-    @Mapping(target = "views", ignore = true)
     @Mapping(target = "publishedOn", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Event update(@MappingTarget Event event, UpdateEventAdminRequestDto eventUpdateDto, Category category, Location location);

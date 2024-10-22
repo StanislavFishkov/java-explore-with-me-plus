@@ -1,9 +1,7 @@
 package ru.practicum.ewm.event.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.ewm.core.util.DateTimeUtil;
 import ru.practicum.ewm.core.validation.DateTimeRange;
@@ -15,6 +13,7 @@ import java.util.List;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @DateTimeRange(before = "rangeStart", after = "rangeEnd")
 public class EventPublicFilterParamsDto {
     String text;
