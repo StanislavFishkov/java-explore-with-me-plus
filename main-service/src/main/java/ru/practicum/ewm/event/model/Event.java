@@ -1,9 +1,7 @@
 package ru.practicum.ewm.event.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.user.model.User;
@@ -11,11 +9,13 @@ import ru.practicum.ewm.user.model.User;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity
 @Table(name = "events")
+@Getter
+@Setter
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class Event {
     private final LocalDateTime createdOn = LocalDateTime.now();
     @Id
@@ -30,14 +30,18 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "location_id")
     private Location location;
+    @Builder.Default
     private Boolean paid = false;
+    @Builder.Default
     private Integer participantLimit = 0;
+    @Builder.Default
     private Boolean requestModeration = true;
     private String title;
     @ManyToOne
     @JoinColumn(name = "initiator_id")
     private User initiator;
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private EventStates state = EventStates.PENDING;
     private LocalDateTime publishedOn;
 

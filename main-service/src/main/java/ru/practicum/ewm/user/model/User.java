@@ -10,7 +10,6 @@ import java.util.Objects;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor

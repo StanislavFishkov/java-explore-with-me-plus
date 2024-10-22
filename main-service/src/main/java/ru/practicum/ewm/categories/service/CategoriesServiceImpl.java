@@ -50,11 +50,14 @@ public class CategoriesServiceImpl implements CategoriesService {
 
     @Override
     public CategoryDto findBy(Long id) {
-        log.info("start getCategory by id:{}", id);
-        Category category = categoriesRepository.findById(id)
+        log.info("Starting to retrieve category by id: {}", id);
+
+        return categoriesRepository.findById(id)
+                .map(category -> {
+                    log.info("Category is found: {}", category);
+                    return categoryMapper.toDto(category);
+                })
                 .orElseThrow(() -> new NotFoundException("Category with id " + id + " not found"));
-        log.info("Category is found: {}", category);
-        return categoryMapper.toDto(category);
     }
 
     @Override

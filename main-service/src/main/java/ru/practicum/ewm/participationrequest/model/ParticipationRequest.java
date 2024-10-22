@@ -14,7 +14,6 @@ import java.util.Objects;
 @Table(name = "participation_requests")
 @Getter
 @Setter
-@ToString
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
