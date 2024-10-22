@@ -39,7 +39,6 @@ public class Event {
     private User initiator;
     @Enumerated(EnumType.STRING)
     private EventStates state = EventStates.PENDING;
-    private int views;
     private LocalDateTime publishedOn;
 
     @Override

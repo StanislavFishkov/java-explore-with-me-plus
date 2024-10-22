@@ -406,6 +406,7 @@ public class EventServiceImpl implements EventService {
 
         if (filterOnlyAvailable != null && filterOnlyAvailable)
             query = query
+                    .groupBy(qRequest.event.participantLimit)
                     .having(
                             qRequest.event.participantLimit.eq(0)
                                     .or(qRequest.event.participantLimit.gt(qRequest.count()))
