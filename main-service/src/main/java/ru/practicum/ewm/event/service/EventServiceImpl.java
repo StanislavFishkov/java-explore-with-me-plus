@@ -2,10 +2,7 @@ package ru.practicum.ewm.event.service;
 
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.support.QueryBase;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPQLTemplates;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -86,37 +83,24 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getEventsByUserId(Long id, int from, int size) {
         PageRequest page = PagingUtil.pageOf(from, size).withSort(Sort.by(Sort.Order.desc("eventDate")));
-        List<EventShortDto> eventShortDtos = eventRepository.findAllByInitiator_Id(id, page)
-                .stream()
-                .map(eventMapper::toShortDto)
-                .toList();
+        List<Event> events = eventRepository.findAllByInitiator_Id(id, page);
 
-        BooleanExpression byStatusAndEventId = QParticipationRequest
-                .participationRequest
-                .status
-                .eq(ParticipationRequestStatus.CONFIRMED)
-                .and(QParticipationRequest.participationRequest
-                        .event.id.in(eventShortDtos.stream().map(EventShortDto::getId).toList()));
+        List<EventShortDto> eventsDto = eventMapper.toShortDto(events);
+        populateWithConfirmedRequests(events, eventsDto);
+        populateWithStats(eventsDto);
 
-        List<ParticipationRequest> participationRequestsList = (List<ParticipationRequest>)
-                participationRequestRepository.findAll(byStatusAndEventId);
-
-        for (EventShortDto eventShortDto : eventShortDtos) {
-            eventShortDto.setConfirmedRequests((int) participationRequestsList.stream()
-                    .filter(participationRequest -> participationRequest.getEvent().getId().equals(eventShortDto.getId()))
-                    .count());
-        }
-        return eventShortDtos;
+        return eventsDto;
     }
 
     @Override
     public EventFullDto getEventById(Long userId, Long eventId) {
-        EventFullDto eventFullDto = eventMapper.toFullDto(checkAndGetEventByIdAndInitiatorId(eventId, userId));
-        eventFullDto.setConfirmedRequests(participationRequestRepository.findAllByEvent_IdAndStatus(eventId,
-                ParticipationRequestStatus.CONFIRMED).size());
-        log.info("Количество подтвержденных запросов: {}", participationRequestRepository.findAllByEvent_IdAndStatus(eventId,
-                ParticipationRequestStatus.CONFIRMED).size());
-        return eventFullDto;
+        Event event = checkAndGetEventByIdAndInitiatorId(eventId, userId);
+
+        EventFullDto eventDto = eventMapper.toFullDto(event);
+        populateWithConfirmedRequests(List.of(event), List.of(eventDto));
+        populateWithStats(List.of(eventDto));
+
+        return eventDto;
     }
 
     @Override
@@ -133,9 +117,15 @@ public class EventServiceImpl implements EventService {
         if (eventUpdateDto.getStateAction() != null) {
             setStateToEvent(eventUpdateDto, event);
         }
-
         event.setId(eventId);
-        return eventMapper.toFullDto(eventRepository.save(event));
+
+        event = eventRepository.save(event);
+
+        EventFullDto eventDto = eventMapper.toFullDto(event);
+        populateWithConfirmedRequests(List.of(event), List.of(eventDto));
+        populateWithStats(List.of(eventDto));
+
+        return eventDto;
     }
 
     @Override
@@ -154,8 +144,12 @@ public class EventServiceImpl implements EventService {
         calculateNewEventState(event, updateEventAdminRequestDto.getStateAction());
 
         event = eventRepository.save(event);
+        EventFullDto eventDto = eventMapper.toFullDto(event);
+        populateWithConfirmedRequests(List.of(event), List.of(eventDto));
+        populateWithStats(List.of(eventDto));
+
         log.info("Event is updated by admin: {}", event);
-        return eventMapper.toFullDto(event);
+        return eventDto;
     }
 
     @Override
@@ -197,23 +191,18 @@ public class EventServiceImpl implements EventService {
 
         var result = eventMapper.toFullDto(eventRepository.findAll(builder,
                 PagingUtil.pageOf(from, size).withSort(new QSort(event.createdOn.desc()))));
+        eventRepository.findAll(builder,
+                PagingUtil.pageOf(from, size).withSort(new QSort(event.createdOn.desc())));
 
-        BooleanExpression byStatusAndEventId = QParticipationRequest
-                .participationRequest
-                .status
-                .eq(ParticipationRequestStatus.CONFIRMED)
-                .and(QParticipationRequest.participationRequest
-                        .event.id.in(result.stream().map(EventFullDto::getId).toList()));
 
-        List<ParticipationRequest> participationRequestsList = (List<ParticipationRequest>)
-                participationRequestRepository.findAll(byStatusAndEventId);
+        List<Event> events = eventRepository.findAll(builder,
+                PagingUtil.pageOf(from, size).withSort(new QSort(event.createdOn.desc()))).toList();
 
-        for (EventFullDto eventFullDto : result) {
-            eventFullDto.setConfirmedRequests((int) participationRequestsList.stream()
-                    .filter(participationRequest -> participationRequest.getEvent().getId().equals(eventFullDto.getId()))
-                    .count());
-        }
-        return result;
+        List<EventFullDto> eventsDto = eventMapper.toFullDto(events);
+        populateWithConfirmedRequests(events, eventsDto);
+        populateWithStats(eventsDto);
+
+        return eventsDto;
     }
 
     @Override
@@ -419,7 +408,7 @@ public class EventServiceImpl implements EventService {
             query = query
                     .having(
                             qRequest.event.participantLimit.eq(0)
-                                    .or(qRequest.event.participantLimit.lt(qRequest.count()))
+                                    .or(qRequest.event.participantLimit.gt(qRequest.count()))
                     );
 
         Map<Long, Long> confirmedRequests = query
