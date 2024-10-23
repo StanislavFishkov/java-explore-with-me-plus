@@ -41,7 +41,7 @@ public class MainApplication {
         System.out.println("Unique: " + statClient.get(statsRequestParamsDto.toBuilder().unique(true).build()));
         System.out.println("By uris: " + statClient.get(statsRequestParamsDto.toBuilder()
                 .unique(true)
-                        .uris(List.of("/events"))
+                .uris(List.of("/events"))
                 .build())
         );
         System.out.println("Not valid: " + statClient.get(statsRequestParamsDto.toBuilder().start(LocalDateTime.now()).build()));
