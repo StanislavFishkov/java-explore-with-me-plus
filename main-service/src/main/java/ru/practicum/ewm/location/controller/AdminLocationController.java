@@ -7,8 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.location.dto.LocationDto;
-import ru.practicum.ewm.location.dto.LocationRequestDto;
-import ru.practicum.ewm.location.dto.UpdateLocationRequestDto;
+import ru.practicum.ewm.location.dto.NewLocationDto;
+import ru.practicum.ewm.location.dto.UpdateLocationAdminRequestDto;
 import ru.practicum.ewm.location.service.LocationService;
 
 @RestController
@@ -21,16 +21,16 @@ public class AdminLocationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public LocationDto addLocation(@RequestBody @Valid LocationRequestDto locationRequestDto) {
-        log.info("POST /admin/locations with body({})", locationRequestDto);
-        return locationService.addLocation(locationRequestDto);
+    public LocationDto addLocation(@RequestBody @Valid NewLocationDto newLocationDto) {
+        log.info("POST /admin/locations with body({})", newLocationDto);
+        return locationService.addLocation(newLocationDto);
     }
 
     @PatchMapping("/{locationId}")
     public LocationDto updateLocation(@PathVariable(name = "locationId") Long locationId,
-                                      @RequestBody @Valid UpdateLocationRequestDto updateLocationRequestDto) {
-        log.info("PATCH /admin/locations with body({})", updateLocationRequestDto);
-        return locationService.updateLocation(locationId, updateLocationRequestDto);
+                                      @RequestBody @Valid UpdateLocationAdminRequestDto updateLocationAdminRequestDto) {
+        log.info("PATCH /admin/locations with body({})", updateLocationAdminRequestDto);
+        return locationService.updateLocation(locationId, updateLocationAdminRequestDto);
     }
 
     @DeleteMapping("/{locationId}")

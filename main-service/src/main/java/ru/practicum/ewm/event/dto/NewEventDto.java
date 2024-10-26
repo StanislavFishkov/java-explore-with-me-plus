@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.ewm.core.util.DateTimeUtil;
-import ru.practicum.ewm.location.dto.LocationRequestDto;
+import ru.practicum.ewm.location.dto.NewLocationDto;
 
 import java.time.LocalDateTime;
 
@@ -30,7 +30,7 @@ public class NewEventDto {
     private LocalDateTime eventDate;
 
     @NotNull
-    private LocationRequestDto location;
+    private NewLocationDto location;
 
     private Boolean paid;
 

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import ru.practicum.ewm.core.util.DateTimeUtil;
 import ru.practicum.ewm.core.validation.NullOrNotBlank;
 import ru.practicum.ewm.event.model.EventStateActionAdmin;
-import ru.practicum.ewm.location.dto.LocationRequestDto;
+import ru.practicum.ewm.location.dto.NewLocationDto;
 
 import java.time.LocalDateTime;
 
@@ -30,7 +30,7 @@ public class UpdateEventAdminRequestDto {
     @Future
     @JsonFormat(pattern = DateTimeUtil.DATE_TIME_FORMAT)
     private LocalDateTime eventDate;
-    private LocationRequestDto location;
+    private NewLocationDto location;
     private Boolean paid;
     @PositiveOrZero
     private Integer participantLimit;

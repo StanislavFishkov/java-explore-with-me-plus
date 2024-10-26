@@ -22,7 +22,7 @@ import ru.practicum.ewm.core.util.DateTimeUtil;
 import ru.practicum.ewm.core.util.PagingUtil;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
-import ru.practicum.ewm.location.dto.LocationRequestDto;
+import ru.practicum.ewm.location.dto.NewLocationDto;
 import ru.practicum.ewm.location.mapper.LocationMapper;
 import ru.practicum.ewm.event.model.*;
 import ru.practicum.ewm.event.repository.EventRepository;
@@ -328,9 +328,9 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    private Location getOrCreateLocation(LocationRequestDto locationRequestDto) {
-        return locationRequestDto == null ? null : locationRepository.findByLatAndLon(locationRequestDto.getLat(), locationRequestDto.getLon())
-                .orElseGet(() -> locationRepository.save(locationMapper.toLocation(locationRequestDto)));
+    private Location getOrCreateLocation(NewLocationDto newLocationDto) {
+        return newLocationDto == null ? null : locationRepository.findByLatAndLon(newLocationDto.getLat(), newLocationDto.getLon())
+                .orElseGet(() -> locationRepository.save(locationMapper.toLocation(newLocationDto)));
     }
 
     private void calculateNewEventState(Event event, EventStateActionAdmin stateAction) {

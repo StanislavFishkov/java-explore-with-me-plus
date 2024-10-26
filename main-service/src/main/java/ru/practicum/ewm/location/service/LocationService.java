@@ -1,8 +1,8 @@
 package ru.practicum.ewm.location.service;
 
 import ru.practicum.ewm.location.dto.LocationDto;
-import ru.practicum.ewm.location.dto.LocationRequestDto;
-import ru.practicum.ewm.location.dto.UpdateLocationRequestDto;
+import ru.practicum.ewm.location.dto.NewLocationDto;
+import ru.practicum.ewm.location.dto.UpdateLocationAdminRequestDto;
 
 import java.util.List;
 
@@ -12,9 +12,9 @@ public interface LocationService {
 
     LocationDto getById(Long locationId);
 
-    LocationDto addLocation(LocationRequestDto locationRequestDto);
+    LocationDto addLocation(NewLocationDto newLocationDto);
 
-    LocationDto updateLocation(Long locationId, UpdateLocationRequestDto updateLocationRequestDto);
+    LocationDto updateLocation(Long locationId, UpdateLocationAdminRequestDto updateLocationAdminRequestDto);
 
     void delete(Long locationId);
 }
