@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.core.error.exception.NotFoundException;
+import ru.practicum.ewm.core.util.PagingUtil;
 import ru.practicum.ewm.location.dto.LocationDto;
 import ru.practicum.ewm.location.dto.LocationRequestDto;
 import ru.practicum.ewm.location.dto.UpdateLocationRequestDto;
@@ -27,12 +28,19 @@ public class LocationServiceImpl implements  LocationService{
 
     @Override
     public List<LocationDto> getLocations(Integer from, Integer size) {
-        return null;
+        log.info("start getLocations by from {} size {}", from, size);
+        return locationRepository.findAll(PagingUtil.pageOf(from, size)).stream()
+                .map(locationMapper::toDto).toList();
     }
 
     @Override
     public LocationDto getById(Long locationId) {
-        return null;
+        log.info("getById params: id = {}", locationId);
+        Location location = locationRepository.findById(locationId).orElseThrow(() -> new NotFoundException(
+                String.format("Локация с ид %s не найдена", locationId))
+        );
+        log.info("getById result location = {}", location);
+        return locationMapper.toDto(location);
     }
 
     @Override
