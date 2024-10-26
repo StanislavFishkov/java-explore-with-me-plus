@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event.model;
+package ru.practicum.ewm.location.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -18,4 +18,6 @@ public class Location {
     private double lat;
     @Column(name = "lon")
     private double lon;
+    private String name;
+    private String address;
 }
