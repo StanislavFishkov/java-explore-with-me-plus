@@ -15,8 +15,10 @@ import java.util.List;
 public interface EventMapper {
     @Mapping(target = "confirmedRequests", ignore = true)
     @Mapping(target = "views", ignore = true)
+    @Named(value = "EventShortDto")
     EventShortDto toShortDto(Event event);
 
+    @IterableMapping(qualifiedByName = "EventShortDto")
     List<EventShortDto> toShortDto(Iterable<Event> event);
 
     @Mapping(target = "confirmedRequests", ignore = true)
