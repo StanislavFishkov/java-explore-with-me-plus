@@ -41,7 +41,7 @@ CREATE TABLE IF NOT exists events (
 	CONSTRAINT pk_events PRIMARY KEY (id),
 	CONSTRAINT events_category_id_fk FOREIGN KEY (category_id) REFERENCES categories(id),
 	CONSTRAINT events_users_fk FOREIGN KEY (initiator_id) REFERENCES users(id),
-	CONSTRAINT fk_location FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+	CONSTRAINT fk_location FOREIGN KEY (location_id) REFERENCES locations(id)
 );
 
 create TABLE IF NOT EXISTS participation_requests (
