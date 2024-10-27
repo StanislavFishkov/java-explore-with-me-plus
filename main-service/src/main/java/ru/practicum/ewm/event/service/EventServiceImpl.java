@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.service;
 
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPQLTemplates;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -234,6 +235,14 @@ public class EventServiceImpl implements EventService {
             if (filters.getRangeEnd() != null)
                 builder.and(qEvent.eventDate.loe(filters.getRangeEnd()));
         }
+
+        if (filters.getLon() != null && filters.getLat() != null)
+            builder.and(Expressions.booleanTemplate("distance({0}, {1}, {2}, {3}) <= {4}",
+                    qEvent.location.lat,
+                    qEvent.location.lon,
+                    filters.getLat(),
+                    filters.getLon(),
+                    filters.getRadius()));
 
         PageRequest page = PagingUtil.pageOf(from, size);
         if (filters.getSort() != null && filters.getSort() == EventPublicFilterParamsDto.EventSort.EVENT_DATE)
