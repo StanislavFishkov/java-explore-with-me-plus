@@ -3661,7 +3661,7 @@
 									"        const location = await api.addLocation(rnd.getLocationOnlyCoordinates());\r",
 									"        const category = await api.addCategory(rnd.getCategory());\r",
 									"        const user = await api.addUser(rnd.getUser());\r",
-									"        const event = await api.addEvent(user.id, rnd.getEvent(category.id, location));\r",
+									"        const event = await api.addEvent(user.id, rnd.getEventWithLocation(category.id, location));\r",
 									"        pm.collectionVariables.set('locId', location.id);\r",
 									"    } catch(err) {\r",
 									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
@@ -3840,7 +3840,7 @@
 									"        const user = await api.addUser(rnd.getUser());\r",
 									"        const category = await api.addCategory(rnd.getCategory());\r",
 									"        const location = await api.addLocation(rnd.getLocation());\r",
-									"        let event = await api.addEvent(user.id, rnd.getEvent(category.id, location));\r",
+									"        let event = await api.addEvent(user.id, rnd.getEventWithLocation(category.id, location));\r",
 									"        event = await api.publishEvent(event.id);\r",
 									"        pm.request.removeQueryParams(['text', 'categories', 'paid', 'lat', 'lon']);\r",
 									"        pm.request.addQueryParams([`text=` + event.annotation, `lat=` + location.lat, `lon=` + location.lon,  'categories=' + category.id, 'paid=' + event.paid]);\r",
@@ -3999,7 +3999,7 @@
 									"        const user = await api.addUser(rnd.getUser());\r",
 									"        const category = await api.addCategory(rnd.getCategory());\r",
 									"        const location = await api.addLocation(rnd.getLocationOnlyCoordinates());\r",
-									"        let event = await api.addEvent(user.id, rnd.getEvent(category.id, location));\r",
+									"        let event = await api.addEvent(user.id, rnd.getEventWithLocation(category.id, location));\r",
 									"        event = await api.publishEvent(event.id);\r",
 									"        pm.request.removeQueryParams(['text', 'categories', 'paid', 'lat', 'lon', 'radius']);\r",
 									"        pm.request.addQueryParams([`text=` + event.annotation, `lat=` + (location.lat-0.01), `lon=` + (location.lon-0.01), `radius=` + 4.3, 'categories=' + category.id, 'paid=' + event.paid]);\r",
@@ -4144,6 +4144,145 @@
 							]
 						},
 						"description": "Обратите внимание: \n- это публичный эндпоинт, соответственно в выдаче должны быть только опубликованные события\n- текстовый поиск (по аннотации и подробному описанию) должен быть без учета регистра букв\n- если в запросе не указан диапазон дат [rangeStart-rangeEnd], то нужно выгружать события, которые произойдут позже текущей даты и времени\n- информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие\n- информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики"
+					},
+					"response": []
+				},
+				{
+					"name": "Получение событий с возможностью фильтрации - проверка работы onlyAvailable",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        eventBody = rnd.getEvent(category.id);\r",
+									"        eventBody.participantLimit = 1;\r",
+									"        let event = await api.addEvent(user.id, eventBody);\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        const submittedUser1 = await api.addUser(rnd.getUser());\r",
+									"        const submittedUser2 = await api.addUser(rnd.getUser());\r",
+									"        await api.publishParticipationRequest(event.id, submittedUser1.id);\r",
+									"        pm.request.removeQueryParams(['text', 'categories', 'paid']);\r",
+									"        pm.request.addQueryParams([`text=` + event.annotation, 'categories=' + category.id, 'paid=' + event.paid]);\r",
+									"        pm.collectionVariables.set('response', event);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            // выполняем наш скрипт\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const source = pm.collectionVariables.get('response');\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Список должен быть пустым\", function () {\r",
+									"    pm.expect(target.length).to.equal(0);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/events?text=0&categories=0&paid=true&rangeStart=2022-01-06%2013%3A30%3A38&rangeEnd=2097-09-06%2013%3A30%3A38&onlyAvailable=true&sort=EVENT_DATE&from=0&size=1000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events"
+							],
+							"query": [
+								{
+									"key": "text",
+									"value": "0",
+									"description": "текст для поиска в содержимом аннотации и подробном описании события"
+								},
+								{
+									"key": "categories",
+									"value": "0",
+									"description": "список идентификаторов категорий в которых будет вестись поиск"
+								},
+								{
+									"key": "paid",
+									"value": "true",
+									"description": "поиск только платных/бесплатных событий"
+								},
+								{
+									"key": "rangeStart",
+									"value": "2022-01-06%2013%3A30%3A38",
+									"description": "дата и время не раньше которых должно произойти событие"
+								},
+								{
+									"key": "rangeEnd",
+									"value": "2097-09-06%2013%3A30%3A38",
+									"description": "дата и время не позже которых должно произойти событие"
+								},
+								{
+									"key": "onlyAvailable",
+									"value": "true",
+									"description": "только события у которых не исчерпан лимит запросов на участие"
+								},
+								{
+									"key": "sort",
+									"value": "EVENT_DATE",
+									"description": "Вариант сортировки: по дате события или по количеству просмотров"
+								},
+								{
+									"key": "from",
+									"value": "0",
+									"description": "количество событий, которые нужно пропустить для формирования текущего набора"
+								},
+								{
+									"key": "size",
+									"value": "1000",
+									"description": "количество событий в наборе"
+								}
+							]
+						}
 					},
 					"response": []
 				}
@@ -4323,7 +4462,7 @@
 					"        }\r",
 					"    }\r",
 					"\r",
-					"    getEvent(categoryId, location) {\r",
+					"    getEventWithLocation(categoryId, location) {\r",
 					"        return {\r",
 					"            annotation: pm.variables.replaceIn('{{$randomLoremParagraph}}'),\r",
 					"            category: categoryId,\r",

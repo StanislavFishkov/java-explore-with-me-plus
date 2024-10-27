@@ -2,8 +2,12 @@ package ru.practicum.ewm.event.service;
 
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPQLTemplates;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -192,12 +196,6 @@ public class EventServiceImpl implements EventService {
         if (filters.getRangeEnd() != null)
             builder.and(event.eventDate.loe(filters.getRangeEnd()));
 
-        var result = eventMapper.toFullDto(eventRepository.findAll(builder,
-                PagingUtil.pageOf(from, size).withSort(new QSort(event.createdOn.desc()))));
-        eventRepository.findAll(builder,
-                PagingUtil.pageOf(from, size).withSort(new QSort(event.createdOn.desc())));
-
-
         List<Event> events = eventRepository.findAll(builder,
                 PagingUtil.pageOf(from, size).withSort(new QSort(event.createdOn.desc()))).toList();
 
@@ -255,7 +253,7 @@ public class EventServiceImpl implements EventService {
         populateWithStats(eventsDto);
 
         if (filters.getSort() != null && filters.getSort() == EventPublicFilterParamsDto.EventSort.VIEWS)
-            Collections.sort(eventsDto, Comparator.comparing(EventShortDto::getViews).reversed());
+            eventsDto.sort(Comparator.comparing(EventShortDto::getViews).reversed());
 
         hitStat(request);
         return eventsDto;
@@ -399,53 +397,45 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void populateWithConfirmedRequests(List<Event> events, List<?> eventsDto) {
+    private void populateWithConfirmedRequests(List<Event> events, List<? extends EventShortDto> eventsDto) {
         populateWithConfirmedRequests(events, eventsDto, null);
     }
 
-    private void populateWithConfirmedRequests(List<Event> events, List<?> eventsDto, Boolean filterOnlyAvailable) {
+    private void populateWithConfirmedRequests(List<Event> events, List<?  extends EventShortDto>  eventsDto, Boolean filterOnlyAvailable) {
         QParticipationRequest qRequest = QParticipationRequest.participationRequest;
         BooleanBuilder requestBuilder = new BooleanBuilder();
         requestBuilder.and(qRequest.status.eq(ParticipationRequestStatus.CONFIRMED)).and(qRequest.event.in(events));
 
         JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(JPQLTemplates.DEFAULT, entityManager);
 
-        var query = jpaQueryFactory.selectFrom(qRequest)
-                .select(qRequest.event.id, qRequest.count())
-                .where(requestBuilder)
-                .groupBy(qRequest.event);
+        Expression<Long> countExpression = qRequest.count();
 
-        if (filterOnlyAvailable != null && filterOnlyAvailable)
-            query = query
-                    .groupBy(qRequest.event.participantLimit)
-                    .having(
-                            qRequest.event.participantLimit.eq(0)
-                                    .or(qRequest.event.participantLimit.gt(qRequest.count()))
-                    );
+        if (filterOnlyAvailable != null && filterOnlyAvailable) {
+            countExpression = new CaseBuilder()
+                    .when(qRequest.event.participantLimit.eq(0)
+                            .or(qRequest.event.participantLimit.gt(qRequest.count()))).then(qRequest.count())
+                    .otherwise(-1L);
+        }
+
+        JPAQuery<Tuple> query = jpaQueryFactory.selectFrom(qRequest)
+                .select(qRequest.event.id, countExpression)
+                .where(requestBuilder)
+                .groupBy(qRequest.event.id, qRequest.event.participantLimit);
 
         Map<Long, Long> confirmedRequests = query
-                .transform(groupBy(qRequest.event.id).as(qRequest.id.count()));
+                .transform(groupBy(qRequest.event.id).as(countExpression));
 
         eventsDto
-                .forEach(e -> {
-                    if (e instanceof EventShortDto event) {
-                        event.setConfirmedRequests(confirmedRequests.getOrDefault(event.getId(), 0L));
-                    } else if (e instanceof EventFullDto event) {
-                        event.setConfirmedRequests(confirmedRequests.getOrDefault(event.getId(), 0L));
-                    }
-                });
+                .forEach(event -> event.setConfirmedRequests(confirmedRequests.getOrDefault(event.getId(), 0L)));
+
+        if (filterOnlyAvailable != null && filterOnlyAvailable) {
+            eventsDto.removeIf(event -> event.getConfirmedRequests() < 0);
+        }
     }
 
-    private void populateWithStats(List<?> eventsDto) {
-        Map<String, ?> uris = eventsDto.stream()
-                .collect(Collectors.toMap(e -> {
-                    if (e instanceof EventShortDto event) {
-                        return String.format("/events/%s", event.getId());
-                    } else if (e instanceof EventFullDto event) {
-                        return String.format("/events/%s", event.getId());
-                    }
-                    return null;
-                }, e -> e));
+    private void populateWithStats(List<? extends EventShortDto> eventsDto) {
+        Map<String, EventShortDto> uris = eventsDto.stream()
+                .collect(Collectors.toMap(e -> String.format("/events/%s", e.getId()), e -> e));
 
         LocalDateTime currentDateTime = DateTimeUtil.currentDateTime();
         List<StatsDto> stats = statClient.get(StatsRequestParamsDto.builder()
@@ -455,15 +445,8 @@ public class EventServiceImpl implements EventService {
                 .unique(true)
                 .build());
 
-        stats.stream()
-                .forEach(stat -> Optional.ofNullable(uris.get(stat.getUri()))
-                        .ifPresent(e -> {
-                            if (e instanceof EventShortDto event) {
-                                event.setViews(stat.getHits());
-                            } else if (e instanceof EventFullDto event) {
-                                event.setViews(stat.getHits());
-                            }
-                        }));
+        stats.forEach(stat -> Optional.ofNullable(uris.get(stat.getUri()))
+                .ifPresent(e -> e.setViews(stat.getHits())));
     }
 
     private void hitStat(HttpServletRequest request) {
