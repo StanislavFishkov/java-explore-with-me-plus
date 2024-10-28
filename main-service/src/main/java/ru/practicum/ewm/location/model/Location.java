@@ -1,13 +1,13 @@
-package ru.practicum.ewm.event.model;
+package ru.practicum.ewm.location.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "locations")
-@Data
+@Getter
+@Setter
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class Location {
@@ -18,4 +18,6 @@ public class Location {
     private double lat;
     @Column(name = "lon")
     private double lon;
+    private String name;
+    private String address;
 }

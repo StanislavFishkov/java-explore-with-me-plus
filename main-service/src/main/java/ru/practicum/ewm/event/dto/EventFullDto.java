@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import ru.practicum.ewm.categories.dto.CategoryDto;
 import ru.practicum.ewm.core.util.DateTimeUtil;
 import ru.practicum.ewm.event.model.EventStates;
+import ru.practicum.ewm.location.dto.LocationDto;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
